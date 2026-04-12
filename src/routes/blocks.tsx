@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AppShell } from "@/components/navigation/AppShell";
 import { DiagnosisFlow } from "@/components/blocks/DiagnosisFlow";
 import { ProgramView } from "@/components/blocks/ProgramView";
