@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@tanstack/react-router";
 import { Clock, Lock, CheckCircle2, Brain, Crosshair } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTierGate } from "@/hooks/useTierGate";
+import { UpgradeModal } from "@/components/upgrade/UpgradeModal";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/training")({
@@ -48,6 +50,7 @@ function TrainingPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [duration, setDuration] = useState("all");
+  const { upgradeOpen, setUpgradeOpen, highlightTier, requireTier, hasAccess } = useTierGate();
 
   const { data: tasks, isLoading: tasksLoading } = useTasks();
   const { data: completions } = useTaskCompletions();
@@ -56,6 +59,17 @@ function TrainingPage() {
     () => new Set((completions ?? []).map((c) => c.task_id)),
     [completions]
   );
+
+  // Free users: max 3 tasks per week
+  const weeklyCompletionCount = useMemo(() => {
+    if (!completions) return 0;
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+    weekStart.setHours(0, 0, 0, 0);
+    return completions.filter((c) => new Date(c.completed_at) >= weekStart).length;
+  }, [completions]);
+
+  const freeTaskLimitReached = !hasAccess("pro") && weeklyCompletionCount >= 3;
 
   const filtered = useMemo(() => {
     if (!tasks) return [];
@@ -69,11 +83,31 @@ function TrainingPage() {
     });
   }, [tasks, category, search, duration]);
 
+  const handleTaskClick = (task: Tables<"tasks">) => {
+    if (task.tier_required !== "free" && !requireTier(task.tier_required as "pro" | "elite")) return false;
+    if (freeTaskLimitReached && !requireTier("pro")) return false;
+    return true;
+  };
+
   return (
     <AppShell>
       <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto pb-24">
         <h1 className="text-xl font-display font-bold text-foreground mb-1">Training</h1>
         <p className="text-xs text-muted-foreground mb-5">Deine mentalen Übungen & Tools</p>
+
+        {/* Free limit warning */}
+        {freeTaskLimitReached && (
+          <div className="rounded-2xl border border-tier-pro/30 bg-tier-pro/5 p-4 mb-5 text-center">
+            <p className="text-xs text-foreground font-medium mb-1">Wochenlimit erreicht (3/3)</p>
+            <p className="text-[11px] text-muted-foreground mb-2">Upgrade auf Pro für unbegrenzte Aufgaben.</p>
+            <button
+              onClick={() => requireTier("pro")}
+              className="text-xs font-semibold text-tier-pro hover:underline"
+            >
+              Upgrade auf Pro →
+            </button>
+          </div>
+        )}
 
         {/* Weekly plan */}
         <div className="mb-6">
@@ -91,10 +125,20 @@ function TrainingPage() {
             <p className="text-xs text-muted-foreground mb-3">
               Identifiziere und überwinde mentale Blockaden mit gezielten Techniken.
             </p>
-            <Link to="/blocks" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
-              <Brain size={14} />
-              Jetzt starten →
-            </Link>
+            {hasAccess("pro") ? (
+              <Link to="/blocks" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
+                <Brain size={14} />
+                Jetzt starten →
+              </Link>
+            ) : (
+              <button
+                onClick={() => requireTier("pro")}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-tier-pro hover:underline"
+              >
+                <Lock size={14} />
+                Pro erforderlich →
+              </button>
+            )}
           </div>
         </div>
 
@@ -128,16 +172,19 @@ function TrainingPage() {
                 key={task.id}
                 task={task}
                 completed={completedIds.has(task.id)}
+                onGatedClick={handleTaskClick}
               />
             ))
           )}
         </div>
       </div>
+
+      <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} highlightTier={highlightTier} />
     </AppShell>
   );
 }
 
-function TaskGridCard({ task, completed }: { task: Tables<"tasks">; completed: boolean }) {
+function TaskGridCard({ task, completed, onGatedClick }: { task: Tables<"tasks">; completed: boolean; onGatedClick: (task: Tables<"tasks">) => boolean }) {
   const isLocked = task.tier_required !== "free";
   const dots = difficultyDots[task.difficulty] ?? 1;
   const catLabel = categoryLabels[task.category] ?? task.category;
@@ -187,10 +234,22 @@ function TaskGridCard({ task, completed }: { task: Tables<"tasks">; completed: b
     </div>
   );
 
-  if (isLocked) return <div>{content}</div>;
+  if (isLocked) {
+    return (
+      <button onClick={() => onGatedClick(task)} className="text-left w-full">
+        {content}
+      </button>
+    );
+  }
 
   return (
-    <Link to="/training/$taskId" params={{ taskId: task.id }}>
+    <Link
+      to="/training/$taskId"
+      params={{ taskId: task.id }}
+      onClick={(e) => {
+        if (!onGatedClick(task)) e.preventDefault();
+      }}
+    >
       {content}
     </Link>
   );
