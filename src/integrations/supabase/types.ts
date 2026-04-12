@@ -227,9 +227,11 @@ export type Database = {
       forum_posts: {
         Row: {
           category: Database["public"]["Enums"]["forum_category"]
+          comment_count: number
           content: string
           created_at: string
           id: string
+          is_anonymous: boolean
           is_answered: boolean
           is_pinned: boolean
           tags: string[] | null
@@ -240,9 +242,11 @@ export type Database = {
         }
         Insert: {
           category: Database["public"]["Enums"]["forum_category"]
+          comment_count?: number
           content: string
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           is_answered?: boolean
           is_pinned?: boolean
           tags?: string[] | null
@@ -253,9 +257,11 @@ export type Database = {
         }
         Update: {
           category?: Database["public"]["Enums"]["forum_category"]
+          comment_count?: number
           content?: string
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           is_answered?: boolean
           is_pinned?: boolean
           tags?: string[] | null
@@ -316,6 +322,51 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_reports: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+          reason: string
+          reporter_id: string
+          status: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reason: string
+          reporter_id: string
+          status?: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reason?: string
+          reporter_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "forum_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forum_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
             referencedColumns: ["id"]
           },
         ]

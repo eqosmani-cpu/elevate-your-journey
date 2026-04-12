@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppShell } from "@/components/navigation/AppShell";
-import { MessageSquare, Users, TrendingUp, Plus } from "lucide-react";
+import { ForumPostCard } from "@/components/forum/ForumPostCard";
+import { ForumFilters } from "@/components/forum/ForumFilters";
+import { NewPostDialog } from "@/components/forum/NewPostDialog";
+import { useForumPosts } from "@/hooks/useForumPosts";
+import { Plus, Users, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { GreenButton } from "@/components/ui/GreenButton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/community")({
   head: () => ({
@@ -13,66 +19,110 @@ export const Route = createFileRoute("/community")({
   component: CommunityPage,
 });
 
-const mockPosts = [
-  { id: 1, author: "Leon K.", topic: "Mental-Stärke", title: "Wie geht ihr mit Nervosität vor großen Spielen um?", replies: 14, likes: 23 },
-  { id: 2, author: "Sara M.", topic: "Fokus", title: "Meine Pre-Game Routine — teile deine!", replies: 8, likes: 31 },
-  { id: 3, author: "Tim R.", topic: "Resilienz", title: "Nach Verletzung zurückgekommen — meine Geschichte", replies: 22, likes: 56 },
-];
-
 function CommunityPage() {
+  const [category, setCategory] = useState("all");
+  const [sort, setSort] = useState("new");
+  const [page, setPage] = useState(1);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const { data, isLoading, refetch } = useForumPosts({ category, sort, page });
+
   return (
     <AppShell>
-      <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto">
+      <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto pb-24">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-5">
           <div>
             <h1 className="text-xl font-display font-bold text-foreground">Community</h1>
             <p className="text-xs text-muted-foreground mt-0.5">Tausche dich aus und wachse gemeinsam</p>
           </div>
-          <GreenButton size="sm">
-            <Plus size={16} />
-            Neuer Beitrag
-          </GreenButton>
+          <div className="hidden md:block">
+            <GreenButton size="sm" onClick={() => setDialogOpen(true)}>
+              <Plus size={16} />
+              Frage stellen
+            </GreenButton>
+          </div>
         </div>
 
         {/* Stats bar */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-5">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Users size={14} />
-            <span>1.234 Mitglieder</span>
+            <span>Community Forum</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <TrendingUp size={14} />
-            <span>89 aktiv heute</span>
+            <span>{data?.totalCount ?? 0} Beiträge</span>
           </div>
         </div>
 
+        {/* Filters */}
+        <ForumFilters
+          category={category}
+          sort={sort}
+          onCategoryChange={(c) => { setCategory(c); setPage(1); }}
+          onSortChange={(s) => { setSort(s); setPage(1); }}
+        />
+
         {/* Posts */}
-        <div className="space-y-3">
-          {mockPosts.map((post) => (
-            <div
-              key={post.id}
-              className="rounded-2xl bg-card border border-border p-4 transition-all duration-200 hover:border-primary/30 cursor-pointer"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-block rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-[11px] font-semibold">
-                  {post.topic}
-                </span>
-                <span className="text-[11px] text-muted-foreground">von {post.author}</span>
+        <div className="space-y-3 mt-5">
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="rounded-2xl bg-card border border-border p-4 space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-1/2" />
               </div>
-              <h3 className="font-display font-semibold text-sm text-card-foreground mb-3">
-                {post.title}
-              </h3>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <MessageSquare size={12} />
-                  <span>{post.replies} Antworten</span>
-                </div>
-                <span>❤️ {post.likes}</span>
-              </div>
+            ))
+          ) : data?.posts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground text-sm">Keine Beiträge gefunden.</p>
+              <GreenButton size="sm" className="mt-4" onClick={() => setDialogOpen(true)}>
+                Erstelle den ersten Beitrag
+              </GreenButton>
             </div>
-          ))}
+          ) : (
+            data?.posts.map((post) => <ForumPostCard key={post.id} post={post} />)
+          )}
         </div>
+
+        {/* Pagination */}
+        {data && data.totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="p-2 rounded-lg bg-secondary text-muted-foreground disabled:opacity-30 hover:text-foreground transition-colors"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-xs text-muted-foreground">
+              Seite {page} von {data.totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
+              disabled={page === data.totalPages}
+              className="p-2 rounded-lg bg-secondary text-muted-foreground disabled:opacity-30 hover:text-foreground transition-colors"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* FAB — mobile only */}
+        <button
+          onClick={() => setDialogOpen(true)}
+          className="md:hidden fixed bottom-20 right-4 z-40 h-14 w-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center glow-neon-intense shadow-lg active:scale-95 transition-transform"
+        >
+          <Plus size={24} />
+        </button>
+
+        <NewPostDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onPostCreated={() => refetch()}
+        />
       </div>
     </AppShell>
   );

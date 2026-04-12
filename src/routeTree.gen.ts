@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CoachingRouteImport } from './routes/coaching'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CommunityPostIdRouteImport } from './routes/community.$postId'
 
 const TrainingRoute = TrainingRouteImport.update({
   id: '/training',
@@ -52,34 +53,42 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommunityPostIdRoute = CommunityPostIdRouteImport.update({
+  id: '/$postId',
+  path: '/$postId',
+  getParentRoute: () => CommunityRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/coaching': typeof CoachingRoute
-  '/community': typeof CommunityRoute
+  '/community': typeof CommunityRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/training': typeof TrainingRoute
+  '/community/$postId': typeof CommunityPostIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/coaching': typeof CoachingRoute
-  '/community': typeof CommunityRoute
+  '/community': typeof CommunityRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/training': typeof TrainingRoute
+  '/community/$postId': typeof CommunityPostIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/coaching': typeof CoachingRoute
-  '/community': typeof CommunityRoute
+  '/community': typeof CommunityRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/training': typeof TrainingRoute
+  '/community/$postId': typeof CommunityPostIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/training'
+    | '/community/$postId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/training'
+    | '/community/$postId'
   id:
     | '__root__'
     | '/'
@@ -109,12 +120,13 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/training'
+    | '/community/$postId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CoachingRoute: typeof CoachingRoute
-  CommunityRoute: typeof CommunityRoute
+  CommunityRoute: typeof CommunityRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   ProfileRoute: typeof ProfileRoute
@@ -172,13 +184,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/community/$postId': {
+      id: '/community/$postId'
+      path: '/$postId'
+      fullPath: '/community/$postId'
+      preLoaderRoute: typeof CommunityPostIdRouteImport
+      parentRoute: typeof CommunityRoute
+    }
   }
 }
+
+interface CommunityRouteChildren {
+  CommunityPostIdRoute: typeof CommunityPostIdRoute
+}
+
+const CommunityRouteChildren: CommunityRouteChildren = {
+  CommunityPostIdRoute: CommunityPostIdRoute,
+}
+
+const CommunityRouteWithChildren = CommunityRoute._addFileChildren(
+  CommunityRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CoachingRoute: CoachingRoute,
-  CommunityRoute: CommunityRoute,
+  CommunityRoute: CommunityRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   ProfileRoute: ProfileRoute,
