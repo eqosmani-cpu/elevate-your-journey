@@ -1,4 +1,3 @@
-// Daily motivational quotes from football legends and sports psychologists
 const quotes = [
   { text: "Talent bringt dich ins Spiel. Mentalität gewinnt es.", author: "Jürgen Klopp" },
   { text: "Ich habe immer an mich geglaubt. Auch wenn sonst niemand es getan hat.", author: "Zlatan Ibrahimović" },
@@ -27,15 +26,12 @@ export function MotivationalQuote() {
   const quote = getDailyQuote();
 
   return (
-    <div className="rounded-2xl bg-card border border-border p-5 relative overflow-hidden">
-      {/* Accent line */}
-      <div className="absolute left-0 top-0 bottom-0 w-1 gradient-neon rounded-l-2xl" />
-
-      <blockquote className="pl-4">
-        <p className="text-sm font-body italic text-foreground leading-relaxed mb-2">
+    <div className="rounded-2xl bg-card border border-border p-6 shadow-xs">
+      <blockquote>
+        <p className="text-[14px] font-display italic text-foreground leading-relaxed mb-3">
           „{quote.text}"
         </p>
-        <footer className="text-xs text-muted-foreground font-display font-medium">
+        <footer className="text-[12px] text-muted-foreground font-body font-light">
           — {quote.author}
         </footer>
       </blockquote>

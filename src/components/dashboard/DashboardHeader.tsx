@@ -1,7 +1,6 @@
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { StreakBadge } from "@/components/ui/StreakBadge";
 import { Bell } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import type { Database } from "@/integrations/supabase/types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -11,7 +10,6 @@ interface DashboardHeaderProps {
   unreadNotifications: number;
 }
 
-// Time-based greeting
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return "Guten Morgen";
@@ -19,7 +17,6 @@ function getGreeting(): string {
   return "Guten Abend";
 }
 
-// Level labels
 export function getLevelLabel(level: number): string {
   const labels: Record<number, string> = {
     1: "Rookie",
@@ -47,7 +44,7 @@ export function DashboardHeader({ profile, unreadNotifications }: DashboardHeade
   const xpProgress = Math.min(100, (profile.xp_points / xpForNextLevel) * 100);
 
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center justify-between mb-8">
       <div className="flex items-center gap-3">
         <UserAvatar
           name={displayName}
@@ -57,27 +54,21 @@ export function DashboardHeader({ profile, unreadNotifications }: DashboardHeade
           size="md"
         />
         <div>
-          <h1 className="text-lg font-display font-bold text-foreground leading-tight">
-            {greeting}, {firstName} 👋
+          <p className="text-[13px] text-muted-foreground font-light">
+            {greeting}
+          </p>
+          <h1 className="text-xl font-display text-foreground leading-tight">
+            {firstName}
           </h1>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-xs text-muted-foreground">
-              {profile.xp_points} XP
-            </span>
-            <span className="text-xs text-muted-foreground">•</span>
-            <span className="text-xs text-primary font-semibold">
-              Lvl {profile.level}: {getLevelLabel(profile.level)}
-            </span>
-          </div>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
         <StreakBadge count={profile.streak_current} />
         <button className="relative p-2 rounded-xl hover:bg-muted/50 transition-colors text-muted-foreground">
-          <Bell size={20} />
+          <Bell size={20} strokeWidth={1.5} />
           {unreadNotifications > 0 && (
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-destructive border-2 border-background" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive" />
           )}
         </button>
       </div>
