@@ -45,8 +45,8 @@ function BlockBreakerPage() {
         program_id: program.id,
         user_id: authUser.id,
         current_step: 1,
-        diagnosis_result: result as unknown as Record<string, unknown>,
-      });
+        diagnosis_result: result as any,
+      } as any);
       if (error) throw error;
 
       toast.success("Programm gestartet! Los geht's 💪");
