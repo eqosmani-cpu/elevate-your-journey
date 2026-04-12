@@ -46,12 +46,34 @@ interface DiagnosisFlowProps {
   onComplete: (result: DiagnosisResult, program: Tables<"block_programs">) => void;
 }
 
+// Map block categories to coach specialization keywords
+const blockToSpecialization: Record<string, string[]> = {
+  form_loss: ["Formtief", "Selbstvertrauen", "Kognitive Verhaltenstherapie"],
+  fear_of_failure: ["Versagensangst", "Druckbewältigung", "Angst"],
+  external_pressure: ["Druckbewältigung", "Achtsamkeit", "NLP"],
+  injury_return: ["Verletzungsrückkehr", "Visualisierung", "Comeback"],
+  concentration: ["Konzentration", "Achtsamkeit", "Fokus"],
+  identity_crisis: ["Identitätskrise", "NLP", "Jugendspieler"],
+};
+
 export function DiagnosisFlow({ programs, onComplete }: DiagnosisFlowProps) {
   const [step, setStep] = useState(0);
   const [blockType, setBlockType] = useState<BlockCategory | null>(null);
   const [intensity, setIntensity] = useState(5);
   const [duration, setDuration] = useState<string | null>(null);
   const [context, setContext] = useState<string | null>(null);
+
+  // Fetch coaches for smart matching
+  const { data: allCoaches } = useCoaches({ availableOnly: true });
+  const matchedCoaches = blockType
+    ? (allCoaches ?? []).filter((c) =>
+        c.specialization?.some((s) =>
+          blockToSpecialization[blockType]?.some((kw) =>
+            s.toLowerCase().includes(kw.toLowerCase())
+          )
+        )
+      ).slice(0, 2)
+    : [];
 
   const handleFinish = () => {
     if (!blockType || !duration || !context) return;
@@ -203,6 +225,36 @@ export function DiagnosisFlow({ programs, onComplete }: DiagnosisFlowProps) {
                 </h3>
                 <p className="text-xs text-muted-foreground">5 Tage × 15 Min · Schritt für Schritt</p>
               </div>
+
+              {/* Smart coach matching */}
+              {matchedCoaches.length > 0 && (
+                <div className="rounded-xl bg-secondary/50 p-4 mb-4 text-left">
+                  <h3 className="text-xs font-semibold text-foreground mb-2">💡 Empfohlene Coaches für dein Profil</h3>
+                  <div className="space-y-2">
+                    {matchedCoaches.map((c) => (
+                      <Link
+                        key={c.id}
+                        to="/coaching/$coachId"
+                        params={{ coachId: c.id }}
+                        className="flex items-center gap-2.5 rounded-lg bg-card border border-border p-2.5 hover:border-primary/30 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center text-[10px] font-display font-bold text-foreground shrink-0">
+                          {c.name.split(" ").map((n) => n[0]).join("")}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{c.name}</p>
+                          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <Star size={9} className="text-chart-3 fill-chart-3" />
+                            <span>{Number(c.rating).toFixed(1)}</span>
+                            <span>· ab €{c.price_eur}</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-primary font-medium shrink-0">Profil →</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <GreenButton onClick={handleFinish} className="w-full">
                 Programm starten →
