@@ -8,7 +8,8 @@ import { GreenButton } from "@/components/ui/GreenButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, Flag, Clock, Flame, MessageSquare, ThumbsUp, Lightbulb, Heart } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Flag, Clock, Flame, MessageSquare, ThumbsUp, Lightbulb, Heart, Bot } from "lucide-react";
+import { useAiForumAnswer } from "@/hooks/useAiCoach";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -58,6 +59,14 @@ function PostDetailPage() {
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { data: userReactions } = useUserReactions(postId, userId);
+  const { loading: aiAnswerLoading, generateAnswer: generateAiAnswer } = useAiForumAnswer();
+
+  const handleAiAnswer = async () => {
+    const answer = await generateAiAnswer(postId);
+    if (answer) {
+      queryClient.invalidateQueries({ queryKey: ["forum-comments", postId] });
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id));
@@ -224,9 +233,29 @@ function PostDetailPage() {
 
         {/* Comments */}
         <div className="mt-6">
-          <h2 className="font-display font-semibold text-sm text-foreground mb-4 flex items-center gap-1.5">
-            <MessageSquare size={14} /> {comments?.length ?? 0} Antworten
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display font-semibold text-sm text-foreground flex items-center gap-1.5">
+              <MessageSquare size={14} /> {comments?.length ?? 0} Antworten
+            </h2>
+            {userId && !post.is_answered && (comments?.length ?? 0) === 0 && (
+              <button
+                onClick={handleAiAnswer}
+                disabled={aiAnswerLoading}
+                className="flex items-center gap-1.5 rounded-full bg-purple-500/15 text-purple-400 px-3 py-1.5 text-[11px] font-medium hover:bg-purple-500/25 transition-colors disabled:opacity-60"
+              >
+                {aiAnswerLoading ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+                    Generiert...
+                  </>
+                ) : (
+                  <>
+                    <Bot size={12} /> KI-Antwort anfordern
+                  </>
+                )}
+              </button>
+            )}
+          </div>
 
           {commentsLoading ? (
             <div className="space-y-3">

@@ -8,6 +8,8 @@ import { CommunityHighlight } from "@/components/dashboard/CommunityHighlight";
 import { MotivationalQuote } from "@/components/dashboard/MotivationalQuote";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { XpLevelBar } from "@/components/dashboard/XpLevelBar";
+import { AiTaskCard, AiGenerateButton } from "@/components/ai/AiTaskCard";
+import { useAiTaskGenerator } from "@/hooks/useAiCoach";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,6 +95,7 @@ function AuthenticatedDashboard() {
     isLoading,
   } = useDashboardData();
   const navigate = useNavigate();
+  const { task: aiTask, loading: aiLoading, generate: generateAiTask, clear: clearAiTask } = useAiTaskGenerator();
 
   if (isLoading || !profile) {
     return <DashboardSkeleton />;
@@ -112,6 +115,22 @@ function AuthenticatedDashboard() {
           task={todayTask}
           completed={todayCompleted}
           onStart={() => navigate({ to: "/training" })}
+        />
+      )}
+
+      {/* AI Task Generator */}
+      {aiTask ? (
+        <AiTaskCard
+          task={aiTask}
+          onStart={() => navigate({ to: "/training" })}
+          onDismiss={clearAiTask}
+        />
+      ) : (
+        <AiGenerateButton
+          loading={aiLoading}
+          onClick={() => generateAiTask()}
+          label="Personalisierte Aufgabe generieren ✨"
+          className="w-full"
         />
       )}
 

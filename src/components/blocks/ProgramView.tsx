@@ -2,6 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GreenButton } from "@/components/ui/GreenButton";
 import { Textarea } from "@/components/ui/textarea";
+import { AiTaskCard, AiGenerateButton } from "@/components/ai/AiTaskCard";
+import { useAiTaskGenerator } from "@/hooks/useAiCoach";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -28,6 +30,7 @@ export function ProgramView({ progress }: ProgramViewProps) {
   const [reflection, setReflection] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const { task: aiTask, loading: aiLoading, generate: generateAiTask, clear: clearAiTask } = useAiTaskGenerator();
 
   const program = progress.block_programs;
   if (!program) return null;
@@ -140,6 +143,18 @@ export function ProgramView({ progress }: ProgramViewProps) {
               <h3 className="text-xs font-semibold text-primary mb-1">💡 Empfehlung</h3>
               <p className="text-xs text-muted-foreground">Buche eine Coaching-Session, um deine Fortschritte mit einem Profi zu besprechen und das Gelernte zu vertiefen.</p>
             </div>
+
+            {/* AI follow-up exercises */}
+            {aiTask ? (
+              <AiTaskCard task={aiTask} onDismiss={clearAiTask} />
+            ) : (
+              <AiGenerateButton
+                loading={aiLoading}
+                onClick={() => generateAiTask(`Weiterführende Übung nach Block Breaker: ${program.title}`)}
+                label="Weiterführende Übungen von KI ✨"
+                className="w-full"
+              />
+            )}
           </motion.div>
         )}
 
