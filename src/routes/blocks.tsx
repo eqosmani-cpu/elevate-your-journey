@@ -12,7 +12,7 @@ import { Lock, ArrowLeft, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
-export const Route = createFileRoute("/training/blocks")({
+export const Route = createFileRoute("/blocks")({
   head: () => ({
     meta: [
       { title: "Block Breaker — MindPitch" },
