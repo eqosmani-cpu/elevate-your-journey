@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Lock, CheckCircle2 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
-import type { Tables } from "@/integrations/supabase/types";
 
 interface StepData {
   day: number;
@@ -32,7 +31,6 @@ export function ProgramView({ progress }: ProgramViewProps) {
   const [submitting, setSubmitting] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const { task: aiTask, loading: aiLoading, generate: generateAiTask, clear: clearAiTask } = useAiTaskGenerator();
-  const [showConfetti, setShowConfetti] = useState(false);
 
   const program = progress.block_programs;
   if (!program) return null;
