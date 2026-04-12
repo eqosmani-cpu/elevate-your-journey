@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CoachingRouteImport } from './routes/coaching'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TrainingBlocksRouteImport } from './routes/training.blocks'
 import { Route as TrainingTaskIdRouteImport } from './routes/training.$taskId'
 import { Route as CommunityPostIdRouteImport } from './routes/community.$postId'
 
@@ -54,6 +55,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrainingBlocksRoute = TrainingBlocksRouteImport.update({
+  id: '/blocks',
+  path: '/blocks',
+  getParentRoute: () => TrainingRoute,
+} as any)
 const TrainingTaskIdRoute = TrainingTaskIdRouteImport.update({
   id: '/$taskId',
   path: '/$taskId',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/training': typeof TrainingRouteWithChildren
   '/community/$postId': typeof CommunityPostIdRoute
   '/training/$taskId': typeof TrainingTaskIdRoute
+  '/training/blocks': typeof TrainingBlocksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/training': typeof TrainingRouteWithChildren
   '/community/$postId': typeof CommunityPostIdRoute
   '/training/$taskId': typeof TrainingTaskIdRoute
+  '/training/blocks': typeof TrainingBlocksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/training': typeof TrainingRouteWithChildren
   '/community/$postId': typeof CommunityPostIdRoute
   '/training/$taskId': typeof TrainingTaskIdRoute
+  '/training/blocks': typeof TrainingBlocksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/training'
     | '/community/$postId'
     | '/training/$taskId'
+    | '/training/blocks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/training'
     | '/community/$postId'
     | '/training/$taskId'
+    | '/training/blocks'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/training'
     | '/community/$postId'
     | '/training/$taskId'
+    | '/training/blocks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -196,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/training/blocks': {
+      id: '/training/blocks'
+      path: '/blocks'
+      fullPath: '/training/blocks'
+      preLoaderRoute: typeof TrainingBlocksRouteImport
+      parentRoute: typeof TrainingRoute
+    }
     '/training/$taskId': {
       id: '/training/$taskId'
       path: '/$taskId'
@@ -227,10 +246,12 @@ const CommunityRouteWithChildren = CommunityRoute._addFileChildren(
 
 interface TrainingRouteChildren {
   TrainingTaskIdRoute: typeof TrainingTaskIdRoute
+  TrainingBlocksRoute: typeof TrainingBlocksRoute
 }
 
 const TrainingRouteChildren: TrainingRouteChildren = {
   TrainingTaskIdRoute: TrainingTaskIdRoute,
+  TrainingBlocksRoute: TrainingBlocksRoute,
 }
 
 const TrainingRouteWithChildren = TrainingRoute._addFileChildren(
