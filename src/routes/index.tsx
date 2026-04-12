@@ -167,6 +167,7 @@ function AuthenticatedDashboard() {
       <XpLevelBar profile={profile} />
 
       <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} highlightTier={highlightTier} />
+      <LevelUpOverlay level={levelUpLevel} onDismiss={() => setLevelUpLevel(null)} />
     </div>
   );
 }
