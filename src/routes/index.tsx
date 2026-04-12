@@ -78,6 +78,12 @@ function AuthenticatedDashboard() {
   const navigate = useNavigate();
   const { task: aiTask, loading: aiLoading, generate: generateAiTask, clear: clearAiTask } = useAiTaskGenerator();
   const { upgradeOpen, setUpgradeOpen, highlightTier, requireTier, hasAccess, currentTier } = useTierGate();
+  const { checkStreakMilestones } = useStreakTracker();
+  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
+  const prevLevelRef = useRef<number | null>(null);
+
+  // Daily login XP
+  useDailyLoginXp();
 
   // Track weekly AI task count for free users
   const [weeklyAiCount, setWeeklyAiCount] = useState(0);
