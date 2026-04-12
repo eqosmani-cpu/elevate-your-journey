@@ -8,7 +8,8 @@ import { GreenButton } from "@/components/ui/GreenButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, Flag, Clock, Flame, MessageSquare, ThumbsUp, Lightbulb, Heart } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Flag, Clock, Flame, MessageSquare, ThumbsUp, Lightbulb, Heart, Sparkles } from "lucide-react";
+import { useAiForumAnswer } from "@/hooks/useAiCoach";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -58,6 +59,14 @@ function PostDetailPage() {
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { data: userReactions } = useUserReactions(postId, userId);
+  const { loading: aiAnswerLoading, generateAnswer: generateAiAnswer } = useAiForumAnswer();
+
+  const handleAiAnswer = async () => {
+    const answer = await generateAiAnswer(postId);
+    if (answer) {
+      queryClient.invalidateQueries({ queryKey: ["forum-comments", postId] });
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id));
