@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as CoachingRouteImport } from './routes/coaching'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TrainingTaskIdRouteImport } from './routes/training.$taskId'
 import { Route as CommunityPostIdRouteImport } from './routes/community.$postId'
 
 const TrainingRoute = TrainingRouteImport.update({
@@ -53,6 +54,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrainingTaskIdRoute = TrainingTaskIdRouteImport.update({
+  id: '/$taskId',
+  path: '/$taskId',
+  getParentRoute: () => TrainingRoute,
+} as any)
 const CommunityPostIdRoute = CommunityPostIdRouteImport.update({
   id: '/$postId',
   path: '/$postId',
@@ -66,8 +72,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
-  '/training': typeof TrainingRoute
+  '/training': typeof TrainingRouteWithChildren
   '/community/$postId': typeof CommunityPostIdRoute
+  '/training/$taskId': typeof TrainingTaskIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,8 +83,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
-  '/training': typeof TrainingRoute
+  '/training': typeof TrainingRouteWithChildren
   '/community/$postId': typeof CommunityPostIdRoute
+  '/training/$taskId': typeof TrainingTaskIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,8 +95,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
-  '/training': typeof TrainingRoute
+  '/training': typeof TrainingRouteWithChildren
   '/community/$postId': typeof CommunityPostIdRoute
+  '/training/$taskId': typeof TrainingTaskIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/training'
     | '/community/$postId'
+    | '/training/$taskId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/training'
     | '/community/$postId'
+    | '/training/$taskId'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/training'
     | '/community/$postId'
+    | '/training/$taskId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -130,7 +142,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   ProfileRoute: typeof ProfileRoute
-  TrainingRoute: typeof TrainingRoute
+  TrainingRoute: typeof TrainingRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -184,6 +196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/training/$taskId': {
+      id: '/training/$taskId'
+      path: '/$taskId'
+      fullPath: '/training/$taskId'
+      preLoaderRoute: typeof TrainingTaskIdRouteImport
+      parentRoute: typeof TrainingRoute
+    }
     '/community/$postId': {
       id: '/community/$postId'
       path: '/$postId'
@@ -206,6 +225,18 @@ const CommunityRouteWithChildren = CommunityRoute._addFileChildren(
   CommunityRouteChildren,
 )
 
+interface TrainingRouteChildren {
+  TrainingTaskIdRoute: typeof TrainingTaskIdRoute
+}
+
+const TrainingRouteChildren: TrainingRouteChildren = {
+  TrainingTaskIdRoute: TrainingTaskIdRoute,
+}
+
+const TrainingRouteWithChildren = TrainingRoute._addFileChildren(
+  TrainingRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CoachingRoute: CoachingRoute,
@@ -213,7 +244,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   ProfileRoute: ProfileRoute,
-  TrainingRoute: TrainingRoute,
+  TrainingRoute: TrainingRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
