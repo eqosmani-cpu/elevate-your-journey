@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { AppShell } from "@/components/navigation/AppShell";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { TodayCard } from "@/components/dashboard/TodayCard";
@@ -14,6 +14,11 @@ import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useTierGate } from "@/hooks/useTierGate";
 import { UpgradeModal } from "@/components/upgrade/UpgradeModal";
+import { LevelUpOverlay } from "@/components/gamification/LevelUpOverlay";
+import { useDailyLoginXp, useStreakTracker } from "@/hooks/useStreakTracker";
+import { supabase } from "@/integrations/supabase/client";
+import { GreenButton } from "@/components/ui/GreenButton";
+import { Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GreenButton } from "@/components/ui/GreenButton";
 import { Sparkles } from "lucide-react";
