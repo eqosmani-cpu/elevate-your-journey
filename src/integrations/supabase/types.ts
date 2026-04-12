@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      badges: {
+        Row: {
+          category: string
+          description: string | null
+          emoji: string
+          id: string
+          name: string
+          slug: string
+          threshold: number | null
+        }
+        Insert: {
+          category?: string
+          description?: string | null
+          emoji?: string
+          id?: string
+          name: string
+          slug: string
+          threshold?: number | null
+        }
+        Update: {
+          category?: string
+          description?: string | null
+          emoji?: string
+          id?: string
+          name?: string
+          slug?: string
+          threshold?: number | null
+        }
+        Relationships: []
+      }
       block_programs: {
         Row: {
           block_category: Database["public"]["Enums"]["block_category"]
@@ -419,8 +449,10 @@ export type Database = {
           name: string | null
           onboarding_completed: boolean
           position: Database["public"]["Enums"]["player_position"] | null
+          show_on_leaderboard: boolean
           skill_level: Database["public"]["Enums"]["skill_level"] | null
           streak_current: number
+          streak_freeze_used_at: string | null
           streak_longest: number
           tier: Database["public"]["Enums"]["tier_level"]
           xp_points: number
@@ -437,8 +469,10 @@ export type Database = {
           name?: string | null
           onboarding_completed?: boolean
           position?: Database["public"]["Enums"]["player_position"] | null
+          show_on_leaderboard?: boolean
           skill_level?: Database["public"]["Enums"]["skill_level"] | null
           streak_current?: number
+          streak_freeze_used_at?: string | null
           streak_longest?: number
           tier?: Database["public"]["Enums"]["tier_level"]
           xp_points?: number
@@ -455,8 +489,10 @@ export type Database = {
           name?: string | null
           onboarding_completed?: boolean
           position?: Database["public"]["Enums"]["player_position"] | null
+          show_on_leaderboard?: boolean
           skill_level?: Database["public"]["Enums"]["skill_level"] | null
           streak_current?: number
+          streak_freeze_used_at?: string | null
           streak_longest?: number
           tier?: Database["public"]["Enums"]["tier_level"]
           xp_points?: number
@@ -544,6 +580,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       xp_log: {
         Row: {
           created_at: string
@@ -593,11 +665,31 @@ export type Database = {
         }
         Returns: undefined
       }
+      award_badge: {
+        Args: { _badge_slug: string; _user_id: string }
+        Returns: boolean
+      }
       check_and_update_streak: {
         Args: { _user_id: string }
         Returns: undefined
       }
+      get_user_rank: {
+        Args: { _user_id: string }
+        Returns: {
+          rank: number
+          weekly_xp: number
+        }[]
+      }
       get_user_stats: { Args: { _user_id: string }; Returns: Json }
+      get_weekly_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          rank: number
+          user_id: string
+          user_name: string
+          weekly_xp: number
+        }[]
+      }
     }
     Enums: {
       block_category:
