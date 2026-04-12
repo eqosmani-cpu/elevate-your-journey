@@ -359,13 +359,16 @@ export type Database = {
         Row: {
           age: number | null
           avatar_url: string | null
+          challenges: string[] | null
           created_at: string
+          four_week_goal: string | null
           id: string
           last_active: string | null
           level: number
           name: string | null
           onboarding_completed: boolean
           position: Database["public"]["Enums"]["player_position"] | null
+          skill_level: Database["public"]["Enums"]["skill_level"] | null
           streak_current: number
           streak_longest: number
           tier: Database["public"]["Enums"]["tier_level"]
@@ -374,13 +377,16 @@ export type Database = {
         Insert: {
           age?: number | null
           avatar_url?: string | null
+          challenges?: string[] | null
           created_at?: string
+          four_week_goal?: string | null
           id: string
           last_active?: string | null
           level?: number
           name?: string | null
           onboarding_completed?: boolean
           position?: Database["public"]["Enums"]["player_position"] | null
+          skill_level?: Database["public"]["Enums"]["skill_level"] | null
           streak_current?: number
           streak_longest?: number
           tier?: Database["public"]["Enums"]["tier_level"]
@@ -389,13 +395,16 @@ export type Database = {
         Update: {
           age?: number | null
           avatar_url?: string | null
+          challenges?: string[] | null
           created_at?: string
+          four_week_goal?: string | null
           id?: string
           last_active?: string | null
           level?: number
           name?: string | null
           onboarding_completed?: boolean
           position?: Database["public"]["Enums"]["player_position"] | null
+          skill_level?: Database["public"]["Enums"]["skill_level"] | null
           streak_current?: number
           streak_longest?: number
           tier?: Database["public"]["Enums"]["tier_level"]
@@ -568,6 +577,7 @@ export type Database = {
         | "striker"
         | "other"
       reaction_type: "upvote" | "fire" | "helpful" | "relatable"
+      skill_level: "amateur" | "aspiring" | "semi_pro" | "pro"
       task_category:
         | "focus"
         | "confidence"
@@ -743,6 +753,7 @@ export const Constants = {
         "other",
       ],
       reaction_type: ["upvote", "fire", "helpful", "relatable"],
+      skill_level: ["amateur", "aspiring", "semi_pro", "pro"],
       task_category: [
         "focus",
         "confidence",
