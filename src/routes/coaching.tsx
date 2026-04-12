@@ -5,9 +5,11 @@ import { useCoaches, useMyBookings } from "@/hooks/useCoaching";
 import { GreenButton } from "@/components/ui/GreenButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, Filter, Calendar, Clock, Video, CheckCircle2, MessageSquare } from "lucide-react";
+import { Star, Filter, Calendar, Clock, Video, Lock, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useTierGate } from "@/hooks/useTierGate";
+import { UpgradeModal } from "@/components/upgrade/UpgradeModal";
 
 export const Route = createFileRoute("/coaching")({
   head: () => ({
@@ -20,15 +22,8 @@ export const Route = createFileRoute("/coaching")({
 });
 
 const specializations = [
-  "Alle",
-  "Versagensangst",
-  "Druckbewältigung",
-  "Visualisierung",
-  "Verletzungsrückkehr",
-  "Achtsamkeit",
-  "Identitätskrise",
-  "Teamdynamik",
-  "Konzentration",
+  "Alle", "Versagensangst", "Druckbewältigung", "Visualisierung",
+  "Verletzungsrückkehr", "Achtsamkeit", "Identitätskrise", "Teamdynamik", "Konzentration",
 ];
 
 function CoachingPage() {
@@ -36,6 +31,7 @@ function CoachingPage() {
   const [specFilter, setSpecFilter] = useState("Alle");
   const [availableOnly, setAvailableOnly] = useState(false);
   const [userId, setUserId] = useState<string | undefined>();
+  const { upgradeOpen, setUpgradeOpen, highlightTier, requireTier, hasAccess } = useTierGate();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id));
@@ -46,11 +42,30 @@ function CoachingPage() {
     availableOnly,
   });
 
+  const handleCoachClick = (coachId: string) => {
+    if (!requireTier("pro")) return false;
+    return true;
+  };
+
   return (
     <AppShell>
       <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto pb-24">
         <h1 className="text-xl font-display font-bold text-foreground mb-1">Coaching</h1>
         <p className="text-xs text-muted-foreground mb-5">1:1 Sessions mit professionellen Mental-Coaches</p>
+
+        {/* Free user banner */}
+        {!hasAccess("pro") && (
+          <div className="rounded-2xl border border-tier-pro/30 bg-tier-pro/5 p-4 mb-5 flex items-center gap-3">
+            <Lock size={18} className="text-tier-pro shrink-0" />
+            <div className="flex-1">
+              <p className="text-xs font-medium text-foreground">Coaching ist ein Pro-Feature</p>
+              <p className="text-[11px] text-muted-foreground">Upgrade, um 1:1 Sessions mit Coaches zu buchen.</p>
+            </div>
+            <button onClick={() => requireTier("pro")} className="text-xs font-semibold text-tier-pro shrink-0">
+              Upgrade →
+            </button>
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full mb-5 bg-secondary">
@@ -59,7 +74,6 @@ function CoachingPage() {
           </TabsList>
 
           <TabsContent value="discover">
-            {/* Filters */}
             <div className="mb-4">
               <div className="flex items-center gap-2 mb-3 flex-wrap">
                 <Filter size={12} className="text-muted-foreground" />
@@ -91,53 +105,62 @@ function CoachingPage() {
               </div>
             </div>
 
-            {/* Coach cards */}
             {isLoading ? (
               <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-32 w-full rounded-2xl" />
-                ))}
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 w-full rounded-2xl" />)}
               </div>
             ) : (
               <div className="space-y-3">
-                {coaches?.map((coach) => (
-                  <Link
-                    key={coach.id}
-                    to="/coaching/$coachId"
-                    params={{ coachId: coach.id }}
-                    className="block rounded-2xl bg-card border border-border p-4 transition-all hover:border-primary/30 active:scale-[0.99]"
-                  >
-                    <div className="flex gap-3">
-                      <div className="w-14 h-14 rounded-xl bg-surface-elevated flex items-center justify-center text-lg font-display font-bold text-foreground shrink-0">
-                        {coach.name.split(" ").map((n) => n[0]).join("")}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <h3 className="font-display font-semibold text-sm text-card-foreground truncate">{coach.name}</h3>
-                          {coach.available ? (
-                            <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                          ) : (
-                            <span className="text-[9px] text-muted-foreground bg-secondary rounded-full px-1.5 py-0.5">Ausgebucht</span>
-                          )}
+                {coaches?.map((coach) => {
+                  const card = (
+                    <div className="block rounded-2xl bg-card border border-border p-4 transition-all hover:border-primary/30 active:scale-[0.99]">
+                      <div className="flex gap-3">
+                        <div className="w-14 h-14 rounded-xl bg-surface-elevated flex items-center justify-center text-lg font-display font-bold text-foreground shrink-0">
+                          {coach.name.split(" ").map((n) => n[0]).join("")}
                         </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-2">
-                          <Star size={10} className="text-chart-3 fill-chart-3" />
-                          <span className="font-medium">{Number(coach.rating).toFixed(1)}</span>
-                          <span>({coach.rating_count} Bewertungen)</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {coach.specialization?.slice(0, 3).map((s) => (
-                            <span key={s} className="rounded-full bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground">{s}</span>
-                          ))}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-foreground">ab €{coach.price_eur} / Session</span>
-                          <span className="text-[11px] text-primary font-medium">Profil ansehen →</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <h3 className="font-display font-semibold text-sm text-card-foreground truncate">{coach.name}</h3>
+                            {coach.available ? (
+                              <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                            ) : (
+                              <span className="text-[9px] text-muted-foreground bg-secondary rounded-full px-1.5 py-0.5">Ausgebucht</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-2">
+                            <Star size={10} className="text-chart-3 fill-chart-3" />
+                            <span className="font-medium">{Number(coach.rating).toFixed(1)}</span>
+                            <span>({coach.rating_count} Bewertungen)</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {coach.specialization?.slice(0, 3).map((s) => (
+                              <span key={s} className="rounded-full bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground">{s}</span>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-foreground">ab €{coach.price_eur} / Session</span>
+                            <span className="text-[11px] text-primary font-medium">
+                              {hasAccess("pro") ? "Profil ansehen →" : "🔒 Pro"}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </Link>
-                ))}
+                  );
+
+                  if (hasAccess("pro")) {
+                    return (
+                      <Link key={coach.id} to="/coaching/$coachId" params={{ coachId: coach.id }}>
+                        {card}
+                      </Link>
+                    );
+                  }
+                  return (
+                    <button key={coach.id} className="w-full text-left" onClick={() => requireTier("pro")}>
+                      {card}
+                    </button>
+                  );
+                })}
                 {coaches?.length === 0 && (
                   <p className="text-center text-sm text-muted-foreground py-8">Keine Coaches mit diesen Filtern gefunden.</p>
                 )}
@@ -150,6 +173,8 @@ function CoachingPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} highlightTier={highlightTier} />
     </AppShell>
   );
 }
@@ -170,7 +195,6 @@ function MySessionsTab({ userId }: { userId?: string }) {
   const now = new Date();
   const upcoming = bookings?.filter((b) => new Date(b.session_date) >= now && b.status !== "cancelled") ?? [];
   const past = bookings?.filter((b) => new Date(b.session_date) < now || b.status === "completed") ?? [];
-
   const sessions = tab === "upcoming" ? upcoming : past;
 
   return (
@@ -223,7 +247,6 @@ function MySessionsTab({ userId }: { userId?: string }) {
               completed: "Abgeschlossen",
               cancelled: "Storniert",
             };
-
             return (
               <div key={booking.id} className="rounded-2xl bg-card border border-border p-4">
                 <div className="flex items-start justify-between mb-2">
