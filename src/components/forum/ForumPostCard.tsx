@@ -77,7 +77,7 @@ export function ForumPostCard({ post }: ForumPostCardProps) {
         </div>
         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-0.5">
-            <Flame size={11} className="text-orange-400" /> {post.upvotes}
+            <Flame size={11} className="text-destructive" /> {post.upvotes}
           </span>
           <span className="flex items-center gap-0.5">
             <MessageSquare size={11} /> {post.comment_count}
