@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
-import { Clock } from "lucide-react";
+import { Clock, Check } from "lucide-react";
 
 interface TaskCardProps {
   title: string;
   category: string;
-  duration: string; // e.g. "10 Min."
+  duration: string;
   difficulty: 1 | 2 | 3 | 4 | 5;
   completed?: boolean;
   className?: string;
@@ -12,11 +12,11 @@ interface TaskCardProps {
 }
 
 const categoryColors: Record<string, string> = {
-  Fokus: "bg-chart-1/15 text-chart-1",
-  Resilienz: "bg-chart-5/15 text-chart-5",
-  Motivation: "bg-chart-3/15 text-chart-3",
-  Visualisierung: "bg-chart-4/15 text-chart-4",
-  Achtsamkeit: "bg-chart-2/15 text-chart-2",
+  Fokus: "bg-accent-light text-primary",
+  Resilienz: "bg-muted text-muted-foreground",
+  Motivation: "bg-gold-light text-gold",
+  Visualisierung: "bg-accent-light text-primary",
+  Achtsamkeit: "bg-muted text-muted-foreground",
 };
 
 export function TaskCard({
@@ -34,27 +34,35 @@ export function TaskCard({
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left rounded-2xl bg-card p-4 border border-border transition-all duration-200",
-        "hover:border-primary/30 hover:glow-neon active:scale-[0.98]",
+        "w-full text-left rounded-2xl bg-card p-4 border border-border shadow-xs card-hover",
         completed && "opacity-60",
         className
       )}
     >
       {/* Category tag */}
-      <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold mb-3", catColor)}>
+      <span className={cn("inline-block rounded-lg px-2.5 py-0.5 text-[11px] font-medium tracking-label uppercase mb-3", catColor)}>
         {category}
       </span>
 
       {/* Title */}
-      <h3 className="font-display font-semibold text-card-foreground text-sm leading-snug mb-3">
+      <h3 className="font-display text-[15px] text-card-foreground leading-snug mb-3">
         {title}
       </h3>
 
-      {/* Footer: duration + difficulty */}
+      {/* Footer */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-          <Clock size={12} />
-          <span>{duration}</span>
+        <div className="flex items-center gap-1.5 text-muted-foreground text-[12px]">
+          {completed ? (
+            <>
+              <Check size={12} className="text-primary" />
+              <span className="text-primary">Erledigt</span>
+            </>
+          ) : (
+            <>
+              <Clock size={12} strokeWidth={1.5} />
+              <span>{duration}</span>
+            </>
+          )}
         </div>
 
         {/* Difficulty dots */}
@@ -63,8 +71,8 @@ export function TaskCard({
             <div
               key={i}
               className={cn(
-                "w-1.5 h-1.5 rounded-full transition-colors",
-                i < difficulty ? "bg-primary" : "bg-muted"
+                "w-1.5 h-1.5 rounded-full",
+                i < difficulty ? "bg-primary" : "bg-border"
               )}
             />
           ))}

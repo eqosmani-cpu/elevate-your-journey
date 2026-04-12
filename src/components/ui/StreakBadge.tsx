@@ -12,19 +12,17 @@ export function StreakBadge({ count, className }: StreakBadgeProps) {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-display font-semibold transition-all",
+        "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[13px] font-body font-medium transition-all",
         isActive
-          ? "bg-primary/15 text-primary"
+          ? "bg-accent-light text-primary"
           : "bg-muted text-muted-foreground",
         className
       )}
     >
       <Flame
         size={14}
-        className={cn(
-          "transition-all",
-          isActive && "text-primary drop-shadow-[0_0_6px_oklch(0.85_0.22_155_/_0.6)]"
-        )}
+        strokeWidth={1.5}
+        className={cn(isActive && "text-primary")}
         fill={isActive ? "currentColor" : "none"}
       />
       <span>{count}</span>
