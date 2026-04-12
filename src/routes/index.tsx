@@ -1,12 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/navigation/AppShell";
-import { UserAvatar } from "@/components/ui/UserAvatar";
-import { StreakBadge } from "@/components/ui/StreakBadge";
-import { TierBadge } from "@/components/ui/TierBadge";
-import { ProgressRing } from "@/components/ui/ProgressRing";
-import { TaskCard } from "@/components/ui/TaskCard";
-import { GreenButton } from "@/components/ui/GreenButton";
-import { Target, TrendingUp, Award } from "lucide-react";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { TodayCard } from "@/components/dashboard/TodayCard";
+import { StatsRow } from "@/components/dashboard/StatsRow";
+import { CommunityHighlight } from "@/components/dashboard/CommunityHighlight";
+import { MotivationalQuote } from "@/components/dashboard/MotivationalQuote";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { XpLevelBar } from "@/components/dashboard/XpLevelBar";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,83 +25,114 @@ export const Route = createFileRoute("/")({
 });
 
 function DashboardPage() {
+  const navigate = useNavigate();
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check auth state
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate({ to: "/login" });
+        return;
+      }
+
+      // Check onboarding status
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("id", session.user.id)
+        .single();
+
+      if (profile && !profile.onboarding_completed) {
+        navigate({ to: "/onboarding" });
+        return;
+      }
+
+      setIsAuthenticated(true);
+      setAuthChecked(true);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate({ to: "/login" });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  if (!authChecked || !isAuthenticated) {
+    return (
+      <AppShell>
+        <DashboardSkeleton />
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
-      <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <UserAvatar name="Max Müller" level={7} xpProgress={65} size="md" />
-            <div>
-              <h1 className="text-lg font-display font-bold text-foreground leading-tight">
-                Hey, Max 👋
-              </h1>
-              <p className="text-xs text-muted-foreground">Bereit für dein Training?</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <StreakBadge count={12} />
-            <TierBadge tier="pro" />
-          </div>
-        </div>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          {[
-            { icon: Target, label: "Fokus-Score", value: "78%", color: "text-primary" },
-            { icon: TrendingUp, label: "Woche", value: "5/7", color: "text-chart-5" },
-            { icon: Award, label: "XP Gesamt", value: "2.450", color: "text-chart-3" },
-          ].map((stat) => (
-            <div key={stat.label} className="rounded-2xl bg-card border border-border p-3 text-center">
-              <stat.icon size={18} className={`${stat.color} mx-auto mb-1.5`} />
-              <p className={`font-display font-bold text-base ${stat.color}`}>{stat.value}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Progress section */}
-        <div className="rounded-2xl bg-card border border-border p-5 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-semibold text-sm">Wochenziel</h2>
-            <span className="text-xs text-muted-foreground">5 von 7 Übungen</span>
-          </div>
-          <div className="flex items-center gap-5">
-            <ProgressRing progress={71} size={72} strokeWidth={5}>
-              <span className="text-sm font-display font-bold text-primary">71%</span>
-            </ProgressRing>
-            <div className="flex-1">
-              <p className="text-xs text-muted-foreground mb-2">Noch 2 Übungen bis zum Wochenziel</p>
-              <GreenButton size="sm">Weitertrainieren</GreenButton>
-            </div>
-          </div>
-        </div>
-
-        {/* Recommended tasks */}
-        <div className="mb-6">
-          <h2 className="font-display font-semibold text-sm mb-3">Empfohlene Übungen</h2>
-          <div className="grid gap-3">
-            <TaskCard
-              title="Vor-Spiel Visualisierung"
-              category="Visualisierung"
-              duration="10 Min."
-              difficulty={3}
-            />
-            <TaskCard
-              title="Fokus unter Druck halten"
-              category="Fokus"
-              duration="8 Min."
-              difficulty={4}
-            />
-            <TaskCard
-              title="Comeback-Mindset nach Rückstand"
-              category="Resilienz"
-              duration="12 Min."
-              difficulty={5}
-            />
-          </div>
-        </div>
-      </div>
+      <AuthenticatedDashboard />
     </AppShell>
+  );
+}
+
+function AuthenticatedDashboard() {
+  const {
+    profile,
+    todayTask,
+    todayCompleted,
+    tasksThisWeek,
+    activeBlock,
+    nextBooking,
+    trendingPosts,
+    unreadNotifications,
+    isLoading,
+  } = useDashboardData();
+  const navigate = useNavigate();
+
+  if (isLoading || !profile) {
+    return <DashboardSkeleton />;
+  }
+
+  return (
+    <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto space-y-6">
+      {/* Header */}
+      <DashboardHeader
+        profile={profile}
+        unreadNotifications={unreadNotifications}
+      />
+
+      {/* Today's task */}
+      {todayTask && (
+        <TodayCard
+          task={todayTask}
+          completed={todayCompleted}
+          onStart={() => navigate({ to: "/training" })}
+        />
+      )}
+
+      {/* Stats row */}
+      <StatsRow
+        tasksThisWeek={tasksThisWeek}
+        activeBlock={activeBlock}
+        nextBooking={nextBooking}
+      />
+
+      {/* Community highlight */}
+      <CommunityHighlight posts={trendingPosts} />
+
+      {/* Motivational quote */}
+      <MotivationalQuote />
+
+      {/* Quick actions */}
+      <QuickActions />
+
+      {/* XP level bar */}
+      <XpLevelBar profile={profile} />
+    </div>
   );
 }
