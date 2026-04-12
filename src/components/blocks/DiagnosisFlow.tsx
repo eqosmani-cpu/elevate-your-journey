@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 import { GreenButton } from "@/components/ui/GreenButton";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { Star } from "lucide-react";
+import { useCoaches } from "@/hooks/useCoaching";
 import type { Tables } from "@/integrations/supabase/types";
 
 const blockOptions = [
