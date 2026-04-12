@@ -12,20 +12,20 @@ const tierConfig: Record<Tier, { label: string; icon: React.ElementType; colorCl
   free: {
     label: "Free",
     icon: Shield,
-    colorClass: "text-tier-free",
-    bgClass: "bg-tier-free/15",
+    colorClass: "text-muted-foreground",
+    bgClass: "bg-muted",
   },
   pro: {
     label: "Pro",
     icon: Zap,
-    colorClass: "text-tier-pro",
-    bgClass: "bg-tier-pro/15",
+    colorClass: "text-primary",
+    bgClass: "bg-accent-light",
   },
   elite: {
     label: "Elite",
     icon: Crown,
-    colorClass: "text-tier-elite",
-    bgClass: "bg-tier-elite/15",
+    colorClass: "text-gold",
+    bgClass: "bg-gold-light",
   },
 };
 
@@ -36,13 +36,13 @@ export function TierBadge({ tier, className }: TierBadgeProps) {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-display font-semibold",
+        "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] tracking-label uppercase font-body font-medium",
         config.bgClass,
         config.colorClass,
         className
       )}
     >
-      <Icon size={12} />
+      <Icon size={12} strokeWidth={1.5} />
       <span>{config.label}</span>
     </div>
   );

@@ -13,24 +13,24 @@ const GreenButton = React.forwardRef<HTMLButtonElement, GreenButtonProps>(
     const Comp = asChild ? Slot : "button";
 
     const sizeClasses = {
-      sm: "h-9 px-4 text-sm",
-      default: "h-11 px-6 text-sm",
-      lg: "h-13 px-8 text-base",
+      sm: "h-9 px-5 text-[13px]",
+      default: "h-11 px-6 text-[14px]",
+      lg: "h-12 px-8 text-[15px]",
     };
 
     const variantClasses = {
       default:
-        "bg-primary text-primary-foreground glow-neon hover:glow-neon-intense active:scale-[0.98]",
+        "bg-primary text-primary-foreground shadow-xs hover:shadow-accent active:scale-[0.98]",
       outline:
-        "border-2 border-primary text-primary bg-transparent hover:bg-primary/10",
+        "border border-border text-foreground bg-transparent hover:bg-accent-light",
       ghost:
-        "text-primary bg-transparent hover:bg-primary/10",
+        "text-primary bg-transparent hover:bg-accent-light",
     };
 
     return (
       <Comp
         className={cn(
-          "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-display font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40",
+          "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] font-body font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40",
           sizeClasses[size],
           variantClasses[variant],
           className
