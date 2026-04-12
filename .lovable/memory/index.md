@@ -5,7 +5,7 @@ MindPitch: Mental coaching app for football players. Dark theme default.
 Primary: Electric green (#00FF87/oklch 0.85 0.22 155). BG: #0A0E1A.
 Space Grotesk headings, Inter body. German UI, English code.
 Nike-meets-Headspace sports-tech aesthetic. Rounded corners 12px/20px cards.
-Bottom nav mobile, sidebar desktop. Routes: /, /community, /community/$postId, /training, /coaching, /profile, /onboarding, /login.
+Bottom nav mobile, sidebar desktop. Routes: /, /community, /community/$postId, /training, /coaching, /profile, /onboarding, /login, /blocks.
 Lovable Cloud enabled. Auth with email/password. Profile auto-created on signup.
 
 ## Memories
@@ -16,3 +16,4 @@ Lovable Cloud enabled. Auth with email/password. Profile auto-created on signup.
 - [Onboarding](mem://features/onboarding) — 6-step animated flow, saves to profiles, awards 50 XP
 - [Dashboard](mem://features/dashboard) — Header, TodayCard, StatsRow, CommunityHighlight, Quote, QuickActions, XpLevelBar
 - [Forum](mem://features/forum) — Community page with filters/sort/pagination, post detail with reactions/comments, new post dialog, XP rewards, coach badges, anonymous posting, realtime comments
+- [Tier system](mem://features/tier-system) — Free/Pro/Elite tiers. UpgradeModal component, useTierGate hook. Free: 3 tasks/wk, 1 post/wk, 1 AI/wk. Pro: unlimited + Block Breaker + coaching. Elite: priority coaching + check-ins.
