@@ -19,9 +19,6 @@ import { useDailyLoginXp, useStreakTracker } from "@/hooks/useStreakTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { GreenButton } from "@/components/ui/GreenButton";
 import { Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { GreenButton } from "@/components/ui/GreenButton";
-import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
