@@ -21,12 +21,23 @@ function getGreeting(): string {
 
 // Level labels
 export function getLevelLabel(level: number): string {
-  if (level <= 2) return "Rookie";
-  if (level <= 4) return "Performer";
-  if (level <= 7) return "Challenger";
-  if (level <= 10) return "Elite Mindset";
-  return "Legend";
+  const labels: Record<number, string> = {
+    1: "Rookie",
+    2: "Performer",
+    3: "Challenger",
+    4: "Elite Mindset",
+    5: "Legend",
+  };
+  return labels[level] ?? "Legend";
 }
+
+export const LEVEL_THRESHOLDS = [
+  { level: 1, label: "Rookie", minXp: 0, maxXp: 200 },
+  { level: 2, label: "Performer", minXp: 201, maxXp: 500 },
+  { level: 3, label: "Challenger", minXp: 501, maxXp: 1000 },
+  { level: 4, label: "Elite Mindset", minXp: 1001, maxXp: 2000 },
+  { level: 5, label: "Legend", minXp: 2001, maxXp: Infinity },
+];
 
 export function DashboardHeader({ profile, unreadNotifications }: DashboardHeaderProps) {
   const greeting = getGreeting();

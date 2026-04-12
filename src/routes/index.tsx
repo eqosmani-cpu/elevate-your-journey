@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AppShell } from "@/components/navigation/AppShell";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { TodayCard } from "@/components/dashboard/TodayCard";
@@ -14,6 +14,8 @@ import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useTierGate } from "@/hooks/useTierGate";
 import { UpgradeModal } from "@/components/upgrade/UpgradeModal";
+import { LevelUpOverlay } from "@/components/gamification/LevelUpOverlay";
+import { useDailyLoginXp, useStreakTracker } from "@/hooks/useStreakTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { GreenButton } from "@/components/ui/GreenButton";
 import { Sparkles } from "lucide-react";
@@ -76,6 +78,23 @@ function AuthenticatedDashboard() {
   const navigate = useNavigate();
   const { task: aiTask, loading: aiLoading, generate: generateAiTask, clear: clearAiTask } = useAiTaskGenerator();
   const { upgradeOpen, setUpgradeOpen, highlightTier, requireTier, hasAccess, currentTier } = useTierGate();
+  const { checkStreakMilestones } = useStreakTracker();
+  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
+  const prevLevelRef = useRef<number | null>(null);
+
+  // Daily login XP
+  useDailyLoginXp();
+
+  // Level-up detection
+  useEffect(() => {
+    if (!profile) return;
+    if (prevLevelRef.current !== null && profile.level > prevLevelRef.current) {
+      setLevelUpLevel(profile.level);
+    }
+    prevLevelRef.current = profile.level;
+    // Streak milestone check
+    checkStreakMilestones(profile.streak_current);
+  }, [profile?.level, profile?.streak_current, checkStreakMilestones]);
 
   // Track weekly AI task count for free users
   const [weeklyAiCount, setWeeklyAiCount] = useState(0);
@@ -148,6 +167,7 @@ function AuthenticatedDashboard() {
       <XpLevelBar profile={profile} />
 
       <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} highlightTier={highlightTier} />
+      <LevelUpOverlay level={levelUpLevel} onDismiss={() => setLevelUpLevel(null)} />
     </div>
   );
 }
