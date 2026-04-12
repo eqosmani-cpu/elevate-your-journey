@@ -85,6 +85,17 @@ function AuthenticatedDashboard() {
   // Daily login XP
   useDailyLoginXp();
 
+  // Level-up detection
+  useEffect(() => {
+    if (!profile) return;
+    if (prevLevelRef.current !== null && profile.level > prevLevelRef.current) {
+      setLevelUpLevel(profile.level);
+    }
+    prevLevelRef.current = profile.level;
+    // Streak milestone check
+    checkStreakMilestones(profile.streak_current);
+  }, [profile?.level, profile?.streak_current, checkStreakMilestones]);
+
   // Track weekly AI task count for free users
   const [weeklyAiCount, setWeeklyAiCount] = useState(0);
   useEffect(() => {
