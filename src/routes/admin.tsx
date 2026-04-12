@@ -13,14 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { TierBadge } from "@/components/ui/TierBadge";
 import {
   Users, BarChart3, Shield, MessageSquare, Dumbbell, Brain,
   TrendingUp, TrendingDown, Loader2, ArrowLeft, Trash2, Pin, PinOff,
-  Plus, Pencil, Eye, Send, Ban, Crown, Star,
+  Plus, Pencil, Send, Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
