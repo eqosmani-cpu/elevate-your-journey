@@ -91,10 +91,10 @@ function TrainingPage() {
             <p className="text-xs text-muted-foreground mb-3">
               Identifiziere und überwinde mentale Blockaden mit gezielten Techniken.
             </p>
-            <button className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
+            <Link to="/blocks" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
               <Brain size={14} />
               Jetzt starten →
-            </button>
+            </Link>
           </div>
         </div>
 
