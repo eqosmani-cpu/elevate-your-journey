@@ -1,12 +1,12 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, MessageSquare, Brain, CalendarDays, User } from "lucide-react";
+import { Home, MessageSquare, Brain, BarChart3, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", icon: Home, label: "Home" },
   { to: "/community", icon: MessageSquare, label: "Community" },
   { to: "/training", icon: Brain, label: "Training" },
-  { to: "/coaching", icon: CalendarDays, label: "Coaching" },
+  { to: "/progress", icon: BarChart3, label: "Fortschritt" },
   { to: "/profile", icon: User, label: "Profil" },
 ] as const;
 
