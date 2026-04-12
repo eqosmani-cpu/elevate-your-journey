@@ -347,7 +347,7 @@ function TaskForm({ task, onDone }: { task: Tables<"tasks"> | null; onDone: () =
       <Input placeholder="Titel" value={title} onChange={e => setTitle(e.target.value)} />
       <Textarea placeholder="Beschreibung" value={description} onChange={e => setDescription(e.target.value)} rows={3} />
       <div className="grid grid-cols-2 gap-3">
-        <Select value={category} onValueChange={setCategory}>
+        <Select value={category} onValueChange={v => setCategory(v as any)}>
           <SelectTrigger><SelectValue placeholder="Kategorie" /></SelectTrigger>
           <SelectContent>
             {["focus", "confidence", "pressure", "team", "recovery", "visualization"].map(c => (
@@ -355,7 +355,7 @@ function TaskForm({ task, onDone }: { task: Tables<"tasks"> | null; onDone: () =
             ))}
           </SelectContent>
         </Select>
-        <Select value={difficulty} onValueChange={setDifficulty}>
+        <Select value={difficulty} onValueChange={v => setDifficulty(v as any)}>
           <SelectTrigger><SelectValue placeholder="Schwierigkeit" /></SelectTrigger>
           <SelectContent>
             {["easy", "medium", "hard"].map(d => (
@@ -366,7 +366,7 @@ function TaskForm({ task, onDone }: { task: Tables<"tasks"> | null; onDone: () =
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Input type="number" placeholder="Dauer (min)" value={duration} onChange={e => setDuration(e.target.value)} />
-        <Select value={tierRequired} onValueChange={setTierRequired}>
+        <Select value={tierRequired} onValueChange={v => setTierRequired(v as any)}>
           <SelectTrigger><SelectValue placeholder="Tier" /></SelectTrigger>
           <SelectContent>
             {["free", "pro", "elite"].map(t => (
