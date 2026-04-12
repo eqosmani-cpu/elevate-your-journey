@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AppShell } from "@/components/navigation/AppShell";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { TodayCard } from "@/components/dashboard/TodayCard";
