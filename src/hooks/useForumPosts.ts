@@ -18,7 +18,7 @@ export function useForumPosts({ category, sort, page, pageSize = 20 }: UseForumP
 
       // Category filter
       if (category !== "all") {
-        query = query.eq("category", category);
+        query = query.eq("category", category as "question" | "experience" | "motivation" | "tip" | "challenge");
       }
 
       // Sort
