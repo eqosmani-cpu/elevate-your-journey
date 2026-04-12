@@ -8,7 +8,7 @@ import { GreenButton } from "@/components/ui/GreenButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, Flag, Clock, Flame, MessageSquare, ThumbsUp, Lightbulb, Heart, Sparkles, Bot } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Flag, Clock, Flame, MessageSquare, ThumbsUp, Lightbulb, Heart, Bot } from "lucide-react";
 import { useAiForumAnswer } from "@/hooks/useAiCoach";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
