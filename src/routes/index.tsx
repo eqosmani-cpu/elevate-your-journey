@@ -18,7 +18,7 @@ import { LevelUpOverlay } from "@/components/gamification/LevelUpOverlay";
 import { useDailyLoginXp, useStreakTracker } from "@/hooks/useStreakTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { GreenButton } from "@/components/ui/GreenButton";
-import { Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -82,34 +82,20 @@ function AuthenticatedDashboard() {
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const prevLevelRef = useRef<number | null>(null);
 
-  // Daily login XP
   useDailyLoginXp();
 
-  // Level-up detection
   useEffect(() => {
     if (!profile) return;
     if (prevLevelRef.current !== null && profile.level > prevLevelRef.current) {
       setLevelUpLevel(profile.level);
     }
     prevLevelRef.current = profile.level;
-    // Streak milestone check
     checkStreakMilestones(profile.streak_current);
   }, [profile?.level, profile?.streak_current, checkStreakMilestones]);
 
-  // Track weekly AI task count for free users
   const [weeklyAiCount, setWeeklyAiCount] = useState(0);
   useEffect(() => {
     if (hasAccess("pro")) return;
-    const checkAiCount = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const weekStart = new Date();
-      weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
-      weekStart.setHours(0, 0, 0, 0);
-      // Rough proxy: count xp_log entries with source 'task' and reason containing 'KI'
-      // For simplicity, we track locally per session
-    };
-    checkAiCount();
   }, [hasAccess]);
 
   const handleGenerateAi = () => {
@@ -123,39 +109,36 @@ function AuthenticatedDashboard() {
 
   if (isLoading || !profile) return <DashboardSkeleton />;
 
-  // Show "Bereit für mehr?" after 3 completed tasks for free users
   const showUpgradePrompt = currentTier === "free" && tasksThisWeek >= 3;
 
   return (
-    <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto space-y-6">
+    <div className="px-4 py-6 md:px-8 md:py-8 max-w-2xl mx-auto space-y-6">
       <DashboardHeader profile={profile} unreadNotifications={unreadNotifications} />
 
       {todayTask && (
         <TodayCard task={todayTask} completed={todayCompleted} onStart={() => navigate({ to: "/training" })} />
       )}
 
-      {/* Upgrade prompt after 3 tasks */}
       {showUpgradePrompt && (
-        <div className="rounded-2xl border border-tier-pro/30 bg-tier-pro/5 p-5 text-center">
-          <Sparkles size={24} className="text-tier-pro mx-auto mb-2" />
-          <h3 className="font-display font-bold text-sm text-foreground mb-1">Bereit für mehr? 🚀</h3>
-          <p className="text-[11px] text-muted-foreground mb-3">
-            Du hast diese Woche bereits {tasksThisWeek} Aufgaben abgeschlossen. Schalte unbegrenzte Aufgaben und Block Breaker frei.
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+          <h3 className="font-display text-lg text-foreground mb-1">Bereit für mehr?</h3>
+          <p className="text-[13px] text-muted-foreground mb-4 font-light">
+            Du hast diese Woche bereits {tasksThisWeek} Aufgaben abgeschlossen. Schalte unbegrenzte Aufgaben frei.
           </p>
           <GreenButton size="sm" onClick={() => requireTier("pro")}>
-            Potenzial freischalten →
+            Potenzial freischalten
+            <ArrowRight size={14} strokeWidth={1.5} />
           </GreenButton>
         </div>
       )}
 
-      {/* AI Task Generator */}
       {aiTask ? (
         <AiTaskCard task={aiTask} onStart={() => navigate({ to: "/training" })} onDismiss={clearAiTask} />
       ) : (
         <AiGenerateButton
           loading={aiLoading}
           onClick={handleGenerateAi}
-          label={`Personalisierte Aufgabe generieren ✨${!hasAccess("pro") ? ` (${1 - weeklyAiCount}/1)` : ""}`}
+          label={`Personalisierte Aufgabe generieren${!hasAccess("pro") ? ` (${1 - weeklyAiCount}/1)` : ""}`}
           className="w-full"
         />
       )}
