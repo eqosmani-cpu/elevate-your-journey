@@ -19,6 +19,7 @@ import { Route as BlocksRouteImport } from './routes/blocks'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainingTaskIdRouteImport } from './routes/training.$taskId'
 import { Route as CommunityPostIdRouteImport } from './routes/community.$postId'
+import { Route as CoachingCoachIdRouteImport } from './routes/coaching.$coachId'
 
 const TrainingRoute = TrainingRouteImport.update({
   id: '/training',
@@ -70,28 +71,35 @@ const CommunityPostIdRoute = CommunityPostIdRouteImport.update({
   path: '/$postId',
   getParentRoute: () => CommunityRoute,
 } as any)
+const CoachingCoachIdRoute = CoachingCoachIdRouteImport.update({
+  id: '/$coachId',
+  path: '/$coachId',
+  getParentRoute: () => CoachingRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/blocks': typeof BlocksRoute
-  '/coaching': typeof CoachingRoute
+  '/coaching': typeof CoachingRouteWithChildren
   '/community': typeof CommunityRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/training': typeof TrainingRouteWithChildren
+  '/coaching/$coachId': typeof CoachingCoachIdRoute
   '/community/$postId': typeof CommunityPostIdRoute
   '/training/$taskId': typeof TrainingTaskIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/blocks': typeof BlocksRoute
-  '/coaching': typeof CoachingRoute
+  '/coaching': typeof CoachingRouteWithChildren
   '/community': typeof CommunityRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/training': typeof TrainingRouteWithChildren
+  '/coaching/$coachId': typeof CoachingCoachIdRoute
   '/community/$postId': typeof CommunityPostIdRoute
   '/training/$taskId': typeof TrainingTaskIdRoute
 }
@@ -99,12 +107,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/blocks': typeof BlocksRoute
-  '/coaching': typeof CoachingRoute
+  '/coaching': typeof CoachingRouteWithChildren
   '/community': typeof CommunityRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/training': typeof TrainingRouteWithChildren
+  '/coaching/$coachId': typeof CoachingCoachIdRoute
   '/community/$postId': typeof CommunityPostIdRoute
   '/training/$taskId': typeof TrainingTaskIdRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/training'
+    | '/coaching/$coachId'
     | '/community/$postId'
     | '/training/$taskId'
   fileRoutesByTo: FileRoutesByTo
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/training'
+    | '/coaching/$coachId'
     | '/community/$postId'
     | '/training/$taskId'
   id:
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/profile'
     | '/training'
+    | '/coaching/$coachId'
     | '/community/$postId'
     | '/training/$taskId'
   fileRoutesById: FileRoutesById
@@ -150,7 +162,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BlocksRoute: typeof BlocksRoute
-  CoachingRoute: typeof CoachingRoute
+  CoachingRoute: typeof CoachingRouteWithChildren
   CommunityRoute: typeof CommunityRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -230,8 +242,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunityPostIdRouteImport
       parentRoute: typeof CommunityRoute
     }
+    '/coaching/$coachId': {
+      id: '/coaching/$coachId'
+      path: '/$coachId'
+      fullPath: '/coaching/$coachId'
+      preLoaderRoute: typeof CoachingCoachIdRouteImport
+      parentRoute: typeof CoachingRoute
+    }
   }
 }
+
+interface CoachingRouteChildren {
+  CoachingCoachIdRoute: typeof CoachingCoachIdRoute
+}
+
+const CoachingRouteChildren: CoachingRouteChildren = {
+  CoachingCoachIdRoute: CoachingCoachIdRoute,
+}
+
+const CoachingRouteWithChildren = CoachingRoute._addFileChildren(
+  CoachingRouteChildren,
+)
 
 interface CommunityRouteChildren {
   CommunityPostIdRoute: typeof CommunityPostIdRoute
@@ -260,7 +291,7 @@ const TrainingRouteWithChildren = TrainingRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BlocksRoute: BlocksRoute,
-  CoachingRoute: CoachingRoute,
+  CoachingRoute: CoachingRouteWithChildren,
   CommunityRoute: CommunityRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
