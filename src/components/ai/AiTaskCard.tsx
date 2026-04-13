@@ -25,14 +25,15 @@ export function AiTaskCard({ task, onStart, onDismiss }: AiTaskCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
       className="rounded-2xl border border-border bg-card p-5 shadow-card relative overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
-        <span className="inline-flex items-center gap-1 rounded-lg bg-accent-light text-primary px-2.5 py-0.5 text-[11px] font-medium tracking-label uppercase">
+        <span className="inline-flex items-center gap-1 rounded-lg bg-gold-light text-gold px-2.5 py-0.5 text-[11px] font-medium tracking-label uppercase">
           <Sparkles size={10} strokeWidth={1.5} /> KI-Aufgabe
         </span>
         <span className="rounded-lg bg-muted px-2 py-0.5 text-[10px] font-light text-muted-foreground">
@@ -82,7 +83,7 @@ export function AiTaskCard({ task, onStart, onDismiss }: AiTaskCardProps) {
       {/* Affirmation */}
       <div className="rounded-xl bg-gold-light border border-border p-3 mb-4 flex gap-2 items-start">
         <Quote size={12} className="text-gold mt-0.5 shrink-0" strokeWidth={1.5} />
-        <p className="text-[12px] text-gold italic leading-relaxed font-light">"{task.affirmation}"</p>
+        <p className="text-[12px] text-gold italic leading-relaxed font-light">„{task.affirmation}"</p>
       </div>
 
       <div className="flex gap-2">
@@ -120,7 +121,11 @@ export function AiGenerateButton({ loading, onClick, label = "KI-Aufgabe für mi
     >
       {loading ? (
         <>
-          <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-pulse" style={{ animationDelay: "0ms" }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-pulse" style={{ animationDelay: "150ms" }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-pulse" style={{ animationDelay: "300ms" }} />
+          </span>
           <span className="font-light">Wird generiert...</span>
         </>
       ) : (

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { AppShell } from "@/components/navigation/AppShell";
 import { DashboardGreeting } from "@/components/dashboard/DashboardGreeting";
 import { TodayCard } from "@/components/dashboard/TodayCard";
@@ -17,7 +17,7 @@ import { LevelUpOverlay } from "@/components/gamification/LevelUpOverlay";
 import { useDailyLoginXp, useStreakTracker } from "@/hooks/useStreakTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { GreenButton } from "@/components/ui/GreenButton";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -80,12 +80,13 @@ function AuthenticatedDashboard() {
   const { checkStreakMilestones } = useStreakTracker();
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
   const prevLevelRef = useRef<number | null>(null);
+  const [upgradeDismissed, setUpgradeDismissed] = useState(false);
 
   useDailyLoginXp();
 
   useEffect(() => {
     if (!profile) return;
-    if (prevLevelRef.current !== null && profile.level > prevLevelRef.current) {
+    if (prevLevelRef.current !== null && prevLevelRef.current > 0 && profile.level > prevLevelRef.current) {
       setLevelUpLevel(profile.level);
     }
     prevLevelRef.current = profile.level;
@@ -93,8 +94,23 @@ function AuthenticatedDashboard() {
   }, [profile?.level, profile?.streak_current, checkStreakMilestones]);
 
   const [weeklyAiCount, setWeeklyAiCount] = useState(0);
+
   useEffect(() => {
     if (hasAccess("pro")) return;
+    const loadWeeklyAiCount = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+      const { count } = await supabase
+        .from("task_completions")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", session.user.id)
+        .gte("completed_at", weekStart.toISOString());
+      setWeeklyAiCount(count ?? 0);
+    };
+    loadWeeklyAiCount();
   }, [hasAccess]);
 
   const handleGenerateAi = () => {
@@ -108,7 +124,7 @@ function AuthenticatedDashboard() {
 
   if (isLoading || !profile) return <DashboardSkeleton />;
 
-  const showUpgradePrompt = currentTier === "free" && tasksThisWeek >= 3;
+  const showUpgradePrompt = !upgradeDismissed && currentTier === "free" && tasksThisWeek >= 3;
 
   return (
     <div className="px-4 py-6 md:px-8 md:py-2 max-w-[800px] mx-auto space-y-8">
@@ -121,7 +137,14 @@ function AuthenticatedDashboard() {
       )}
 
       {showUpgradePrompt && (
-        <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="rounded-2xl border border-border bg-card p-6 relative">
+          <button
+            onClick={() => setUpgradeDismissed(true)}
+            className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Schließen"
+          >
+            <X size={16} strokeWidth={1.5} />
+          </button>
           <h3 className="font-display text-lg text-foreground mb-1">Bereit für mehr?</h3>
           <p className="text-[13px] text-muted-foreground mb-4 font-light">
             Du hast diese Woche bereits {tasksThisWeek} Aufgaben abgeschlossen. Schalte unbegrenzte Aufgaben frei.

@@ -28,6 +28,23 @@ serve(async (req) => {
     const { postId } = await req.json();
     if (!postId) return new Response(JSON.stringify({ error: "postId required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+    // Tier check: reject free users
+    const { data: profile } = await supabase.from("profiles").select("tier").eq("id", user.id).single();
+    if (!profile || profile.tier === "free") {
+      return new Response(JSON.stringify({ error: "Pro-Abo erforderlich." }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Duplicate check: reject if coach reply already exists
+    const { data: existingReply } = await supabase
+      .from("forum_comments")
+      .select("id")
+      .eq("post_id", postId)
+      .eq("is_coach_reply", true)
+      .limit(1);
+    if (existingReply && existingReply.length > 0) {
+      return new Response(JSON.stringify({ error: "KI-Antwort existiert bereits." }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // Get the post
     const { data: post } = await supabase.from("forum_posts").select("*").eq("id", postId).single();
     if (!post) return new Response(JSON.stringify({ error: "Post not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -49,7 +66,7 @@ Schreibe auf Deutsch, in einem warmen aber professionellen Ton. Verwende Absätz
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "claude-sonnet-4-20250514",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Kategorie: ${post.category}\nTitel: ${post.title}\n\n${post.content}` },
@@ -72,8 +89,8 @@ Schreibe auf Deutsch, in einem warmen aber professionellen Ton. Verwende Absätz
     const { error: commentError } = await supabase.from("forum_comments").insert({
       post_id: postId,
       user_id: user.id,
-      content: `🤖 **MindPitch KI-Coach**\n\n${answer}`,
-      is_coach_reply: false,
+      content: `**MindPitch KI-Coach**\n\n${answer}`,
+      is_coach_reply: true,
     });
     if (commentError) throw commentError;
 
