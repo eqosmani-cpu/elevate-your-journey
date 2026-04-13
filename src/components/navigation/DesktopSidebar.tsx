@@ -3,11 +3,11 @@ import { Home, MessageSquare, Brain, Lock, CalendarDays, BarChart3, Settings } f
 import { cn } from "@/lib/utils";
 
 const mainNavItems = [
-  { to: "/", icon: Home, label: "Übersicht" },
-  { to: "/community", icon: MessageSquare, label: "Community" },
-  { to: "/training", icon: Brain, label: "Training" },
+  { to: "/", icon: Home, label: "Übersicht", proFeature: false },
+  { to: "/community", icon: MessageSquare, label: "Community", proFeature: false },
+  { to: "/training", icon: Brain, label: "Training", proFeature: false },
   { to: "/blocks", icon: Lock, label: "Block Breaker", proFeature: true },
-  { to: "/coaching", icon: CalendarDays, label: "Coaching buchen" },
+  { to: "/coaching", icon: CalendarDays, label: "Coaching buchen", proFeature: false },
 ] as const;
 
 const profileNavItems = [
