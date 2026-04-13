@@ -1,12 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { AppShell } from "@/components/navigation/AppShell";
 import { ForumPostCard } from "@/components/forum/ForumPostCard";
 import { ForumFilters } from "@/components/forum/ForumFilters";
 import { NewPostDialog } from "@/components/forum/NewPostDialog";
 import { useForumPosts } from "@/hooks/useForumPosts";
-import { Plus, Users, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
-import { GreenButton } from "@/components/ui/GreenButton";
+import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTierGate } from "@/hooks/useTierGate";
 import { UpgradeModal } from "@/components/upgrade/UpgradeModal";
@@ -24,7 +23,7 @@ export const Route = createFileRoute("/community")({
 
 function CommunityPage() {
   const [category, setCategory] = useState("all");
-  const [sort, setSort] = useState("new");
+  const [sort] = useState("new");
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { upgradeOpen, setUpgradeOpen, highlightTier, requireTier, hasAccess } = useTierGate();
@@ -32,7 +31,6 @@ function CommunityPage() {
 
   const { data, isLoading, refetch } = useForumPosts({ category, sort, page });
 
-  // Check weekly post count for free users
   useEffect(() => {
     const checkPostCount = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -62,59 +60,49 @@ function CommunityPage() {
 
   return (
     <AppShell>
-      <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto pb-24">
+      <div className="max-w-[800px] mx-auto px-5 py-8 md:px-8 pb-24">
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-xl font-display font-bold text-foreground">Community</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Tausche dich aus und wachse gemeinsam</p>
+            <h1 className="font-display text-4xl text-foreground tracking-[-0.5px]">Community</h1>
+            <p className="text-sm text-tertiary font-light mt-1.5">
+              Fragen stellen. Erfahrungen teilen. Gemeinsam wachsen.
+            </p>
           </div>
-          <div className="hidden md:block">
-            <GreenButton size="sm" onClick={handleNewPost}>
-              <Plus size={16} />
-              Frage stellen
-              {!hasAccess("pro") && <span className="ml-1 text-[10px] opacity-70">({weeklyPostCount}/1)</span>}
-            </GreenButton>
-          </div>
-        </div>
-
-        {/* Stats bar */}
-        <div className="flex items-center gap-4 mb-5">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Users size={14} />
-            <span>Community Forum</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <TrendingUp size={14} />
-            <span>{data?.totalCount ?? 0} Beiträge</span>
-          </div>
+          <button
+            onClick={handleNewPost}
+            className="hidden md:inline-flex items-center gap-1.5 rounded-[10px] bg-primary text-primary-foreground px-[22px] py-[11px] text-[13px] font-medium hover:opacity-90 transition-opacity"
+          >
+            <Plus size={14} strokeWidth={1.5} />
+            Frage stellen
+          </button>
         </div>
 
         {/* Filters */}
         <ForumFilters
           category={category}
-          sort={sort}
           onCategoryChange={(c) => { setCategory(c); setPage(1); }}
-          onSortChange={(s) => { setSort(s); setPage(1); }}
         />
 
-        {/* Posts */}
-        <div className="space-y-3 mt-5">
+        {/* Post list */}
+        <div className="mt-2">
           {isLoading ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="rounded-2xl bg-card border border-border p-4 space-y-2">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-3 w-full" />
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="py-5 border-b border-border space-y-2">
+                <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-3 w-1/3" />
               </div>
             ))
           ) : data?.posts.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-sm">Keine Beiträge gefunden.</p>
-              <GreenButton size="sm" className="mt-4" onClick={handleNewPost}>
+            <div className="text-center py-16">
+              <p className="text-tertiary text-sm font-light">Keine Beiträge gefunden.</p>
+              <button
+                onClick={handleNewPost}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-[10px] bg-primary text-primary-foreground px-[22px] py-[11px] text-[13px] font-medium hover:opacity-90 transition-opacity"
+              >
                 Erstelle den ersten Beitrag
-              </GreenButton>
+              </button>
             </div>
           ) : (
             data?.posts.map((post) => <ForumPostCard key={post.id} post={post} />)
@@ -123,41 +111,36 @@ function CommunityPage() {
 
         {/* Pagination */}
         {data && data.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-3 mt-6">
+          <div className="flex items-center justify-center gap-3 mt-8">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="p-2 rounded-lg bg-secondary text-muted-foreground disabled:opacity-30 hover:text-foreground transition-colors"
+              className="p-2 rounded-lg text-tertiary disabled:opacity-30 hover:text-foreground transition-colors"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} strokeWidth={1.5} />
             </button>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-tertiary">
               Seite {page} von {data.totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
               disabled={page === data.totalPages}
-              className="p-2 rounded-lg bg-secondary text-muted-foreground disabled:opacity-30 hover:text-foreground transition-colors"
+              className="p-2 rounded-lg text-tertiary disabled:opacity-30 hover:text-foreground transition-colors"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={16} strokeWidth={1.5} />
             </button>
           </div>
         )}
 
-        {/* FAB — mobile only */}
+        {/* FAB mobile */}
         <button
           onClick={handleNewPost}
-          className="md:hidden fixed bottom-20 right-4 z-40 h-14 w-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center glow-neon-intense shadow-lg active:scale-95 transition-transform"
+          className="md:hidden fixed bottom-20 right-4 z-40 h-14 w-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg active:scale-95 transition-transform"
         >
-          <Plus size={24} />
+          <Plus size={24} strokeWidth={1.5} />
         </button>
 
-        <NewPostDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          onPostCreated={() => refetch()}
-        />
-
+        <NewPostDialog open={dialogOpen} onOpenChange={setDialogOpen} onPostCreated={() => refetch()} />
         <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} highlightTier={highlightTier} />
       </div>
     </AppShell>
