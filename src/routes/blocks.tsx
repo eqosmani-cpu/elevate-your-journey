@@ -9,8 +9,7 @@ import { UpgradeModal } from "@/components/upgrade/UpgradeModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GreenButton } from "@/components/ui/GreenButton";
-import { Lock, ArrowLeft, Crosshair } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -49,7 +48,7 @@ function BlockBreakerPage() {
         diagnosis_result: result as any,
       } as any);
       if (error) throw error;
-      toast.success("Programm gestartet! Los geht's 💪");
+      toast.success("Programm gestartet!");
       queryClient.invalidateQueries({ queryKey: ["block-progress"] });
     } catch {
       toast.error("Fehler beim Starten des Programms.");
@@ -61,8 +60,8 @@ function BlockBreakerPage() {
   if (isLoading) {
     return (
       <AppShell>
-        <div className="px-4 py-6 max-w-2xl mx-auto space-y-4">
-          <Skeleton className="h-6 w-32" />
+        <div className="max-w-[800px] mx-auto px-5 py-8 space-y-4">
+          <Skeleton className="h-4 w-24" />
           <Skeleton className="h-8 w-3/4" />
           <Skeleton className="h-60 w-full" />
         </div>
@@ -72,49 +71,71 @@ function BlockBreakerPage() {
 
   return (
     <AppShell>
-      <div className="px-4 py-6 md:px-8 md:py-8 max-w-2xl mx-auto pb-24">
-        <Link to="/training" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-4 transition-colors">
-          <ArrowLeft size={14} /> Zurück zum Training
+      <div className="max-w-[800px] mx-auto px-5 py-8 md:px-8 pb-24">
+        <Link to="/training" className="flex items-center gap-1 text-[13px] text-primary hover:opacity-70 transition-opacity mb-6">
+          <ArrowLeft size={14} strokeWidth={1.5} /> Training
         </Link>
 
-        <div className="flex items-center gap-2 mb-5">
-          <Crosshair size={20} className="text-primary" />
-          <h1 className="font-display font-bold text-xl text-foreground">Block Breaker</h1>
-        </div>
-
+        {/* Free tier gate */}
         {!hasPremiumAccess && (
-          <div className="relative">
-            <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center text-center p-8">
-              <Lock size={32} className="text-muted-foreground mb-3" />
-              <h2 className="font-display font-bold text-foreground mb-1">Pro Feature</h2>
-              <p className="text-xs text-muted-foreground mb-4 max-w-xs">
-                Block Breaker ist für Pro- und Elite-Spieler verfügbar. Upgrade deinen Account, um mentale Blockaden gezielt zu lösen.
-              </p>
-              <GreenButton size="sm" onClick={() => setUpgradeOpen(true)}>Upgrade auf Pro →</GreenButton>
-            </div>
-            <div className="rounded-2xl bg-card border border-border p-5 opacity-40 pointer-events-none">
-              <p className="text-sm text-muted-foreground mb-3">Identifiziere und überwinde mentale Blockaden in 5 Tagen.</p>
-              <div className="grid gap-2">
-                {["📉 Formtief", "😰 Versagensangst", "😤 Druck", "🏥 Verletzung", "🎯 Fokus", "🆔 Identität"].map((item) => (
-                  <div key={item} className="rounded-xl bg-secondary p-3 text-sm text-foreground/50">{item}</div>
-                ))}
+          <div className="text-center py-8">
+            {/* Geometric illustration */}
+            <div className="w-24 h-24 mx-auto mb-6 relative">
+              <div className="absolute inset-0 rounded-3xl bg-primary/5 rotate-12" />
+              <div className="absolute inset-2 rounded-2xl bg-primary/10 -rotate-6" />
+              <div className="absolute inset-4 rounded-xl bg-primary/15 rotate-3 flex items-center justify-center">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-primary">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
               </div>
             </div>
+
+            <h1 className="font-display text-[32px] text-foreground tracking-[-0.5px] mb-2">
+              Block Breaker
+            </h1>
+            <p className="text-[15px] text-tertiary font-light max-w-sm mx-auto mb-8">
+              Löse tief verwurzelte mentale Blockaden in 5 Tagen.
+            </p>
+
+            {/* Feature list */}
+            <div className="max-w-xs mx-auto text-left space-y-4 mb-8">
+              {[
+                "Strukturierte 5-Tage-Programme",
+                "Evidenzbasierte Techniken",
+                "Persönlicher Fortschrittsbericht",
+              ].map((feature) => (
+                <div key={feature} className="flex items-center gap-3">
+                  <Check size={16} strokeWidth={1.5} className="text-primary shrink-0" />
+                  <span className="text-sm text-foreground">{feature}</span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setUpgradeOpen(true)}
+              className="w-full max-w-xs mx-auto rounded-[10px] bg-primary text-primary-foreground px-[22px] py-[11px] text-[13px] font-medium hover:opacity-90 transition-opacity block mb-3"
+            >
+              Pro freischalten — ab €9,99/Monat
+            </button>
+            <button
+              onClick={() => setUpgradeOpen(true)}
+              className="w-full max-w-xs mx-auto rounded-[10px] border border-border px-[22px] py-[11px] text-[13px] text-foreground hover:bg-muted/30 transition-colors block"
+            >
+              Mehr erfahren
+            </button>
           </div>
         )}
 
+        {/* Pro/Elite: active program or diagnosis */}
         {hasPremiumAccess && (
           <>
             {activeProgress && <ProgramView progress={activeProgress} />}
             {!activeProgress && programs && (
               <>
-                <p className="text-xs text-muted-foreground mb-5">
-                  Identifiziere deine mentale Blockade und löse sie in 5 Tagen mit einem gezielten Programm.
-                </p>
                 {starting ? (
-                  <div className="text-center py-8">
+                  <div className="text-center py-12">
                     <Skeleton className="h-8 w-48 mx-auto" />
-                    <p className="text-xs text-muted-foreground mt-2">Programm wird erstellt...</p>
+                    <p className="text-xs text-tertiary mt-2">Programm wird erstellt...</p>
                   </div>
                 ) : (
                   <DiagnosisFlow programs={programs} onComplete={handleDiagnosisComplete} />
