@@ -22,7 +22,7 @@ const GreenButton = React.forwardRef<HTMLButtonElement, GreenButtonProps>(
       default:
         "bg-[#3A5C4A] text-white hover:bg-[#2E4A3C] hover:translate-y-[-1px] hover:shadow-hover",
       outline:
-        "border border-[#E8E8E8] text-[#1A1A1A] bg-transparent hover:bg-[#FAFAF8] hover:translate-y-[-1px]",
+        "border border-border text-[#1A1A1A] bg-transparent hover:bg-[#FAFAF8] hover:translate-y-[-1px]",
       ghost:
         "text-[#3A5C4A] bg-transparent hover:bg-[#EDF2EE]",
     };
@@ -30,7 +30,7 @@ const GreenButton = React.forwardRef<HTMLButtonElement, GreenButtonProps>(
     return (
       <Comp
         className={cn(
-          "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3A5C4A] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40",
+          "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3A5C4A] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40",
           "touch-target",
           sizeClasses[size],
           variantClasses[variant],

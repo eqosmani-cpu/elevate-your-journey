@@ -84,8 +84,8 @@
   --secondary-foreground: #3A5C4A;
   --muted: #F0EFEB;
   --muted-foreground: #6B6B6B;
-  --accent: #EDF2EE;
-  --accent-foreground: #3A5C4A;
+  --accent: #3A5C4A;
+  --accent-foreground: #FFFFFF;
   --destructive: #C4453C;
   --destructive-foreground: #FFFFFF;
   --border: rgba(0, 0, 0, 0.07);
@@ -129,6 +129,10 @@
 
   /* Skeleton */
   --skeleton-bg: #F0EFEB;
+}
+
+.dark {
+  color-scheme: light;
 }
 
 /* ============================================
