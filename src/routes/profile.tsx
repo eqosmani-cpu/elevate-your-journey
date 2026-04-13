@@ -22,6 +22,30 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
+  const navigate = useNavigate();
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  const handleMenuClick = async (item: string) => {
+    switch (item) {
+      case "Erfolge & Abzeichen":
+        navigate({ to: "/progress" });
+        break;
+      case "Abo verwalten":
+        setShowUpgrade(true);
+        break;
+      case "Benachrichtigungen":
+        toast.info("Benachrichtigungseinstellungen kommen bald.");
+        break;
+      case "Hilfe & Support":
+        window.open("mailto:support@mindpitch.app", "_blank");
+        break;
+      case "Abmelden":
+        await supabase.auth.signOut();
+        navigate({ to: "/login" });
+        break;
+    }
+  };
+
   return (
     <AppShell>
       <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto">
