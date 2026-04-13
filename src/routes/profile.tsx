@@ -108,6 +108,7 @@ function ProfilePage() {
           ].map((item, i, arr) => (
             <button
               key={item}
+              onClick={() => handleMenuClick(item)}
               className={`w-full flex items-center justify-between px-4 py-3.5 text-sm text-card-foreground hover:bg-muted/30 transition-colors ${
                 i < arr.length - 1 ? "border-b border-border" : ""
               } ${item === "Abmelden" ? "text-destructive" : ""}`}
@@ -117,6 +118,8 @@ function ProfilePage() {
             </button>
           ))}
         </div>
+
+        <UpgradeModal open={showUpgrade} onOpenChange={setShowUpgrade} />
       </div>
     </AppShell>
   );
