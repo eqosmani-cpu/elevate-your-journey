@@ -6,7 +6,7 @@ import { WeeklyPlan } from "@/components/training/WeeklyPlan";
 import { useTasks, useTaskCompletions } from "@/hooks/useTrainingData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@tanstack/react-router";
-import { Clock, Lock, CheckCircle2, Brain, Crosshair } from "lucide-react";
+import { Lock, Check, ChevronRight, Eye, Shield, Target, Users, Heart, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTierGate } from "@/hooks/useTierGate";
 import { UpgradeModal } from "@/components/upgrade/UpgradeModal";
@@ -22,22 +22,22 @@ export const Route = createFileRoute("/training")({
   component: TrainingPage,
 });
 
-const categoryLabels: Record<string, string> = {
-  focus: "🎯 Fokus",
-  confidence: "💪 Selbstvertrauen",
-  pressure: "😤 Druck",
-  team: "🤝 Team",
-  recovery: "🏥 Recovery",
-  visualization: "🧘 Visualisierung",
+const categoryIcons: Record<string, React.ReactNode> = {
+  focus: <Target size={16} strokeWidth={1.5} />,
+  confidence: <Shield size={16} strokeWidth={1.5} />,
+  pressure: <Sparkles size={16} strokeWidth={1.5} />,
+  team: <Users size={16} strokeWidth={1.5} />,
+  recovery: <Heart size={16} strokeWidth={1.5} />,
+  visualization: <Eye size={16} strokeWidth={1.5} />,
 };
 
-const categoryColors: Record<string, string> = {
-  focus: "bg-chart-1/15 text-chart-1",
-  confidence: "bg-chart-3/15 text-chart-3",
-  pressure: "bg-destructive/15 text-destructive",
-  team: "bg-chart-5/15 text-chart-5",
-  recovery: "bg-chart-2/15 text-chart-2",
-  visualization: "bg-chart-4/15 text-chart-4",
+const categoryBgColors: Record<string, string> = {
+  focus: "bg-[#EAF0F5] text-[#5A7A9B]",
+  confidence: "bg-[#EAF5EC] text-[#4A7A52]",
+  pressure: "bg-[#F5EAF0] text-[#8A5A6A]",
+  team: "bg-[#F0EAF5] text-[#6A5A8A]",
+  recovery: "bg-[#F5F0EA] text-[#8A7A5A]",
+  visualization: "bg-[#EAF5F5] text-[#5A8A8A]",
 };
 
 const difficultyDots: Record<string, number> = {
@@ -47,9 +47,7 @@ const difficultyDots: Record<string, number> = {
 };
 
 function TrainingPage() {
-  const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const [duration, setDuration] = useState("all");
   const { upgradeOpen, setUpgradeOpen, highlightTier, requireTier, hasAccess } = useTierGate();
 
   const { data: tasks, isLoading: tasksLoading } = useTasks();
@@ -60,7 +58,6 @@ function TrainingPage() {
     [completions]
   );
 
-  // Free users: max 3 tasks per week
   const weeklyCompletionCount = useMemo(() => {
     if (!completions) return 0;
     const weekStart = new Date();
@@ -75,13 +72,9 @@ function TrainingPage() {
     if (!tasks) return [];
     return tasks.filter((t) => {
       if (category !== "all" && t.category !== category) return false;
-      if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false;
-      if (duration === "short" && t.duration_min > 5) return false;
-      if (duration === "medium" && (t.duration_min < 6 || t.duration_min > 10)) return false;
-      if (duration === "long" && t.duration_min <= 10) return false;
       return true;
     });
-  }, [tasks, category, search, duration]);
+  }, [tasks, category]);
 
   const handleTaskClick = (task: Tables<"tasks">) => {
     if (task.tier_required !== "free" && !requireTier(task.tier_required as "pro" | "elite")) return false;
@@ -91,18 +84,23 @@ function TrainingPage() {
 
   return (
     <AppShell>
-      <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto pb-24">
-        <h1 className="text-xl font-display font-bold text-foreground mb-1">Training</h1>
-        <p className="text-xs text-muted-foreground mb-5">Deine mentalen Übungen & Tools</p>
+      <div className="max-w-[800px] mx-auto px-5 py-8 md:px-8 pb-24">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="font-display text-4xl text-foreground tracking-[-0.5px]">Training</h1>
+          <p className="text-sm text-tertiary font-light mt-1.5">
+            Tägliche mentale Übungen für deinen Fortschritt.
+          </p>
+        </div>
 
         {/* Free limit warning */}
         {freeTaskLimitReached && (
-          <div className="rounded-2xl border border-tier-pro/30 bg-tier-pro/5 p-4 mb-5 text-center">
-            <p className="text-xs text-foreground font-medium mb-1">Wochenlimit erreicht (3/3)</p>
-            <p className="text-[11px] text-muted-foreground mb-2">Upgrade auf Pro für unbegrenzte Aufgaben.</p>
+          <div className="rounded-2xl border border-border bg-card p-5 mb-6 text-center">
+            <p className="text-sm text-foreground mb-1">Wochenlimit erreicht (3/3)</p>
+            <p className="text-xs text-tertiary font-light mb-3">Upgrade auf Pro für unbegrenzte Aufgaben.</p>
             <button
               onClick={() => requireTier("pro")}
-              className="text-xs font-semibold text-tier-pro hover:underline"
+              className="text-[13px] text-primary hover:opacity-70 transition-opacity"
             >
               Upgrade auf Pro →
             </button>
@@ -110,65 +108,32 @@ function TrainingPage() {
         )}
 
         {/* Weekly plan */}
-        <div className="mb-6">
+        <div className="mb-8">
           <WeeklyPlan />
-        </div>
-
-        {/* Block Breaker highlight */}
-        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 mb-6 relative overflow-hidden">
-          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-primary/10 blur-2xl" />
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-2">
-              <Crosshair size={18} className="text-primary" />
-              <h2 className="font-display font-semibold text-sm text-foreground">Block Breaker Pro</h2>
-            </div>
-            <p className="text-xs text-muted-foreground mb-3">
-              Identifiziere und überwinde mentale Blockaden mit gezielten Techniken.
-            </p>
-            {hasAccess("pro") ? (
-              <Link to="/blocks" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
-                <Brain size={14} />
-                Jetzt starten →
-              </Link>
-            ) : (
-              <button
-                onClick={() => requireTier("pro")}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-tier-pro hover:underline"
-              >
-                <Lock size={14} />
-                Pro erforderlich →
-              </button>
-            )}
-          </div>
         </div>
 
         {/* Filters */}
         <TaskFilters
-          search={search}
           category={category}
-          duration={duration}
-          onSearchChange={setSearch}
           onCategoryChange={setCategory}
-          onDurationChange={setDuration}
         />
 
-        {/* Task grid */}
-        <div className="grid gap-3 sm:grid-cols-2 mt-5">
+        {/* Task list */}
+        <div className="mt-4 space-y-2">
           {tasksLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-2xl bg-card border border-border p-4 space-y-2">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
+              <div key={i} className="rounded-2xl bg-card border border-border p-5 space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/3" />
               </div>
             ))
           ) : filtered.length === 0 ? (
-            <div className="col-span-2 text-center py-8">
-              <p className="text-muted-foreground text-sm">Keine Übungen gefunden.</p>
+            <div className="text-center py-12">
+              <p className="text-tertiary text-sm font-light">Keine Übungen gefunden.</p>
             </div>
           ) : (
             filtered.map((task) => (
-              <TaskGridCard
+              <TaskRow
                 key={task.id}
                 task={task}
                 completed={completedIds.has(task.id)}
@@ -184,52 +149,59 @@ function TrainingPage() {
   );
 }
 
-function TaskGridCard({ task, completed, onGatedClick }: { task: Tables<"tasks">; completed: boolean; onGatedClick: (task: Tables<"tasks">) => boolean }) {
+function TaskRow({ task, completed, onGatedClick }: { task: Tables<"tasks">; completed: boolean; onGatedClick: (task: Tables<"tasks">) => boolean }) {
   const isLocked = task.tier_required !== "free";
   const dots = difficultyDots[task.difficulty] ?? 1;
-  const catLabel = categoryLabels[task.category] ?? task.category;
-  const catColor = categoryColors[task.category] ?? "bg-muted text-muted-foreground";
+  const icon = categoryIcons[task.category] ?? <Target size={16} strokeWidth={1.5} />;
+  const iconBg = categoryBgColors[task.category] ?? "bg-muted text-tertiary";
 
   const content = (
     <div
       className={cn(
-        "w-full text-left rounded-2xl bg-card p-4 border border-border transition-all duration-200",
-        !isLocked && "hover:border-primary/30 hover:glow-neon",
-        isLocked && "opacity-60",
-        completed && "border-primary/20"
+        "flex items-center gap-4 rounded-2xl bg-card border border-border px-5 py-5 transition-all duration-200",
+        !isLocked && !completed && "hover:translate-y-[-1px] hover:shadow-sm",
+        isLocked && "opacity-50",
+        completed && "opacity-70"
       )}
     >
-      <div className="flex items-center justify-between mb-3">
-        <span className={cn("inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold", catColor)}>
-          {catLabel}
-        </span>
-        {completed && <CheckCircle2 size={16} className="text-primary" />}
-        {isLocked && <Lock size={14} className="text-muted-foreground" />}
+      {/* Category icon */}
+      <div className={cn("w-9 h-9 rounded-full flex items-center justify-center shrink-0", iconBg)}>
+        {icon}
       </div>
 
-      <h3 className="font-display font-semibold text-card-foreground text-sm leading-snug mb-1">
-        {task.title}
-      </h3>
-      {isLocked && (
-        <p className="text-[10px] text-muted-foreground mb-1">🔒 Pro erforderlich</p>
-      )}
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <h3 className={cn(
+          "text-[15px] leading-snug",
+          completed ? "text-tertiary" : "text-foreground"
+        )}>
+          {task.title}
+        </h3>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[11px] text-tertiary">{task.duration_min} Min.</span>
+          <div className="flex items-center gap-0.5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "w-[5px] h-[5px] rounded-full",
+                  i < dots ? "bg-primary" : "bg-[#E0E0E0]"
+                )}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
 
-      <div className="flex items-center justify-between mt-3">
-        <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-          <Clock size={12} />
-          <span>{task.duration_min} Min.</span>
-        </div>
-        <div className="flex items-center gap-1">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className={cn(
-                "w-1.5 h-1.5 rounded-full",
-                i < dots ? "bg-primary" : "bg-muted"
-              )}
-            />
-          ))}
-        </div>
+      {/* Right action */}
+      <div className="shrink-0">
+        {completed ? (
+          <Check size={16} strokeWidth={1.5} className="text-primary" />
+        ) : isLocked ? (
+          <Lock size={14} strokeWidth={1.5} className="text-tertiary" />
+        ) : (
+          <ChevronRight size={16} strokeWidth={1.5} className="text-tertiary" />
+        )}
       </div>
     </div>
   );
