@@ -1,13 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import { AppShell } from "@/components/navigation/AppShell";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardGreeting } from "@/components/dashboard/DashboardGreeting";
 import { TodayCard } from "@/components/dashboard/TodayCard";
 import { StatsRow } from "@/components/dashboard/StatsRow";
 import { CommunityHighlight } from "@/components/dashboard/CommunityHighlight";
 import { MotivationalQuote } from "@/components/dashboard/MotivationalQuote";
-import { QuickActions } from "@/components/dashboard/QuickActions";
-import { XpLevelBar } from "@/components/dashboard/XpLevelBar";
+import { UpcomingCoaching } from "@/components/dashboard/UpcomingCoaching";
 import { AiTaskCard, AiGenerateButton } from "@/components/ai/AiTaskCard";
 import { useAiTaskGenerator } from "@/hooks/useAiCoach";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
@@ -67,7 +66,7 @@ function DashboardPage() {
     return <AppShell><DashboardSkeleton /></AppShell>;
   }
 
-  return <AppShell><AuthenticatedDashboard /></AppShell>;
+  return <AppShell title="Übersicht"><AuthenticatedDashboard /></AppShell>;
 }
 
 function AuthenticatedDashboard() {
@@ -112,15 +111,17 @@ function AuthenticatedDashboard() {
   const showUpgradePrompt = currentTier === "free" && tasksThisWeek >= 3;
 
   return (
-    <div className="px-4 py-6 md:px-8 md:py-8 max-w-2xl mx-auto space-y-6">
-      <DashboardHeader profile={profile} unreadNotifications={unreadNotifications} />
+    <div className="px-4 py-6 md:px-8 md:py-2 max-w-[800px] mx-auto space-y-8">
+      <DashboardGreeting profile={profile} tasksThisWeek={tasksThisWeek} />
+
+      <StatsRow profile={profile} tasksThisWeek={tasksThisWeek} />
 
       {todayTask && (
         <TodayCard task={todayTask} completed={todayCompleted} onStart={() => navigate({ to: "/training" })} />
       )}
 
       {showUpgradePrompt && (
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-xs">
+        <div className="rounded-2xl border border-border bg-card p-6">
           <h3 className="font-display text-lg text-foreground mb-1">Bereit für mehr?</h3>
           <p className="text-[13px] text-muted-foreground mb-4 font-light">
             Du hast diese Woche bereits {tasksThisWeek} Aufgaben abgeschlossen. Schalte unbegrenzte Aufgaben frei.
@@ -143,11 +144,11 @@ function AuthenticatedDashboard() {
         />
       )}
 
-      <StatsRow tasksThisWeek={tasksThisWeek} activeBlock={activeBlock} nextBooking={nextBooking} />
       <CommunityHighlight posts={trendingPosts} />
+
+      <UpcomingCoaching booking={nextBooking} />
+
       <MotivationalQuote />
-      <QuickActions />
-      <XpLevelBar profile={profile} />
 
       <UpgradeModal open={upgradeOpen} onOpenChange={setUpgradeOpen} highlightTier={highlightTier} />
       <LevelUpOverlay level={levelUpLevel} onDismiss={() => setLevelUpLevel(null)} />
