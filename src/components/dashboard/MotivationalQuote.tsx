@@ -26,13 +26,14 @@ export function MotivationalQuote() {
   const quote = getDailyQuote();
 
   return (
-    <div className="rounded-2xl bg-card border border-border p-6 shadow-xs">
+    <div className="flex gap-4">
+      <div className="w-0.5 shrink-0 rounded-full bg-primary" />
       <blockquote>
-        <p className="text-[14px] font-display italic text-foreground leading-relaxed mb-3">
+        <p className="font-display text-base italic text-muted-foreground leading-relaxed mb-2">
           „{quote.text}"
         </p>
-        <footer className="text-[12px] text-muted-foreground font-body font-light">
-          — {quote.author}
+        <footer className="text-[11px] uppercase tracking-label text-tertiary">
+          {quote.author}
         </footer>
       </blockquote>
     </div>

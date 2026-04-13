@@ -1,4 +1,3 @@
-import { GreenButton } from "@/components/ui/GreenButton";
 import { Clock, Check, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
@@ -23,68 +22,47 @@ interface TodayCardProps {
 export function TodayCard({ task, completed, onStart }: TodayCardProps) {
   const catLabel = categoryLabels[task.category] || task.category;
 
-  return (
-    <div
-      className={cn(
-        "rounded-3xl p-6 transition-all duration-300 relative overflow-hidden",
-        completed
-          ? "bg-accent-light border border-border"
-          : "bg-primary text-primary-foreground shadow-accent"
-      )}
-    >
-      <div className="relative">
-        <div className="flex items-center justify-between mb-4">
-          <span className={cn(
-            "text-[11px] font-body font-medium uppercase tracking-label",
-            completed ? "text-primary" : "text-primary-foreground/70"
-          )}>
-            {completed ? "Abgeschlossen" : "Heutige Aufgabe"}
-          </span>
-          {completed && (
-            <span className="flex items-center gap-1 text-[12px] font-medium text-primary">
-              <Check size={14} strokeWidth={1.5} />
-              Erledigt
-            </span>
-          )}
+  if (completed) {
+    return (
+      <div className="rounded-2xl bg-accent-light border border-border p-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Check size={16} strokeWidth={1.5} className="text-primary" />
+          <span className="text-[13px] text-primary font-body">Heute abgeschlossen</span>
         </div>
-
-        <h2 className={cn(
-          "text-[22px] font-display mb-3 leading-tight",
-          completed ? "text-foreground" : "text-primary-foreground"
-        )}>
-          {task.title}
-        </h2>
-
-        <div className="flex items-center gap-3 mb-5">
-          <span className={cn(
-            "inline-block rounded-lg px-2.5 py-1 text-[11px] font-medium tracking-label uppercase",
-            completed ? "bg-primary/10 text-primary" : "bg-white/15 text-primary-foreground"
-          )}>
-            {catLabel}
-          </span>
-          <div className={cn(
-            "flex items-center gap-1 text-[12px]",
-            completed ? "text-muted-foreground" : "text-primary-foreground/70"
-          )}>
-            <Clock size={12} strokeWidth={1.5} />
-            <span>{task.duration_min} Min.</span>
-          </div>
-        </div>
-
-        {completed ? (
-          <div className="h-1 rounded-full bg-primary/15 overflow-hidden">
-            <div className="h-full w-full rounded-full bg-primary" />
-          </div>
-        ) : (
-          <button
-            onClick={onStart}
-            className="inline-flex items-center gap-2 text-[14px] font-body font-medium text-primary-foreground hover:opacity-80 transition-opacity"
-          >
-            Jetzt starten
-            <ArrowRight size={16} strokeWidth={1.5} />
-          </button>
-        )}
+        <h2 className="font-display text-xl text-foreground leading-tight">{task.title}</h2>
       </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl bg-primary p-8">
+      <p className="text-[10px] uppercase tracking-label text-primary-foreground/50 mb-4">
+        Heutige Aufgabe
+      </p>
+      <h2 className="font-display text-2xl text-primary-foreground leading-tight mb-2">
+        {task.title}
+      </h2>
+      {task.description && (
+        <p className="text-[13px] text-primary-foreground/60 font-light line-clamp-2 mb-5">
+          {task.description}
+        </p>
+      )}
+      <div className="flex items-center gap-3 mb-6">
+        <span className="inline-block rounded-lg px-2.5 py-1 text-[11px] tracking-label uppercase bg-[rgba(255,255,255,0.15)] text-primary-foreground/70">
+          {catLabel}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] bg-[rgba(255,255,255,0.15)] text-primary-foreground/70">
+          <Clock size={11} strokeWidth={1.5} />
+          {task.duration_min} Min
+        </span>
+      </div>
+      <button
+        onClick={onStart}
+        className="inline-flex items-center gap-2 rounded-[10px] bg-card text-primary px-5 py-2.5 text-sm font-body font-medium hover:opacity-90 transition-opacity"
+      >
+        Aufgabe starten
+        <ArrowRight size={14} strokeWidth={1.5} />
+      </button>
     </div>
   );
 }
