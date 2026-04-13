@@ -2,12 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/navigation/AppShell";
-import { GreenButton } from "@/components/ui/GreenButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Clock, Play, Pause, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Play, Pause, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -22,36 +21,27 @@ export const Route = createFileRoute("/training/$taskId")({
 });
 
 const categoryLabels: Record<string, string> = {
-  focus: "🎯 Fokus",
-  confidence: "💪 Selbstvertrauen",
-  pressure: "😤 Druck",
-  team: "🤝 Team",
-  recovery: "🏥 Recovery",
-  visualization: "🧘 Visualisierung",
+  focus: "FOKUS",
+  confidence: "SELBSTVERTRAUEN",
+  pressure: "DRUCKBEWÄLTIGUNG",
+  team: "TEAM",
+  recovery: "ERHOLUNG",
+  visualization: "VISUALISIERUNG",
 };
-
-const categoryColors: Record<string, string> = {
-  focus: "bg-chart-1/15 text-chart-1",
-  confidence: "bg-chart-3/15 text-chart-3",
-  pressure: "bg-destructive/15 text-destructive",
-  team: "bg-chart-5/15 text-chart-5",
-  recovery: "bg-chart-2/15 text-chart-2",
-  visualization: "bg-chart-4/15 text-chart-4",
-};
-
-const moodEmojis = [
-  { value: 1, emoji: "😞", label: "Schlecht" },
-  { value: 2, emoji: "😕", label: "Mäßig" },
-  { value: 3, emoji: "😐", label: "Okay" },
-  { value: 4, emoji: "🙂", label: "Gut" },
-  { value: 5, emoji: "😄", label: "Super" },
-];
 
 const difficultyDots: Record<string, number> = {
   easy: 1,
   medium: 2,
   hard: 3,
 };
+
+const moodLabels = [
+  { value: 1, label: "Angespannt" },
+  { value: 2, label: "Unruhig" },
+  { value: 3, label: "Neutral" },
+  { value: 4, label: "Entspannt" },
+  { value: 5, label: "Ruhig" },
+];
 
 type Phase = "intro" | "mood-before" | "active" | "mood-after" | "reflection" | "done";
 
@@ -64,7 +54,6 @@ function TaskDetailPage() {
   const [moodBefore, setMoodBefore] = useState<number | null>(null);
   const [moodAfter, setMoodAfter] = useState<number | null>(null);
   const [reflection, setReflection] = useState("");
-  const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -94,28 +83,8 @@ function TaskDetailPage() {
   }, []);
 
   useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, []);
-
-  const handleStartExercise = () => {
-    setPhase("mood-before");
-  };
-
-  const handleMoodBeforeDone = () => {
-    setPhase("active");
-    startTimer();
-  };
-
-  const handleFinishExercise = () => {
-    pauseTimer();
-    setPhase("mood-after");
-  };
-
-  const handleMoodAfterDone = () => {
-    setPhase("reflection");
-  };
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -123,7 +92,6 @@ function TaskDetailPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error("Bitte melde dich an."); return; }
 
-      // Save completion
       const { error } = await supabase.from("task_completions").insert({
         task_id: taskId,
         user_id: user.id,
@@ -133,7 +101,6 @@ function TaskDetailPage() {
       });
       if (error) throw error;
 
-      // XP + streak
       await supabase.rpc("add_xp", {
         _user_id: user.id,
         _points: 20,
@@ -146,7 +113,7 @@ function TaskDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["task-completions"] });
       queryClient.invalidateQueries({ queryKey: ["weekly-activity"] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      toast.success("+20 XP! Übung abgeschlossen 🎉");
+      toast.success("+20 XP! Übung abgeschlossen");
     } catch {
       toast.error("Fehler beim Speichern.");
     } finally {
@@ -163,8 +130,8 @@ function TaskDetailPage() {
   if (isLoading) {
     return (
       <AppShell>
-        <div className="px-4 py-6 max-w-2xl mx-auto space-y-4">
-          <Skeleton className="h-5 w-24" />
+        <div className="max-w-[800px] mx-auto px-5 py-8 space-y-4">
+          <Skeleton className="h-4 w-24" />
           <Skeleton className="h-8 w-3/4" />
           <Skeleton className="h-40 w-full" />
         </div>
@@ -175,83 +142,77 @@ function TaskDetailPage() {
   if (!task) {
     return (
       <AppShell>
-        <div className="px-4 py-12 text-center">
-          <p className="text-muted-foreground">Übung nicht gefunden.</p>
-          <Link to="/training" className="text-primary text-sm mt-2 inline-block">← Zurück zum Training</Link>
+        <div className="max-w-[800px] mx-auto px-5 py-16 text-center">
+          <p className="text-tertiary text-sm font-light">Übung nicht gefunden.</p>
+          <Link to="/training" className="text-primary text-[13px] mt-3 inline-block">← Zurück zum Training</Link>
         </div>
       </AppShell>
     );
   }
 
   const dots = difficultyDots[task.difficulty] ?? 1;
-  const catLabel = categoryLabels[task.category] ?? task.category;
-  const catColor = categoryColors[task.category] ?? "bg-muted text-muted-foreground";
+  const catLabel = categoryLabels[task.category] ?? task.category.toUpperCase();
   const targetSeconds = task.duration_min * 60;
+  const remaining = Math.max(targetSeconds - elapsed, 0);
   const progress = Math.min(elapsed / targetSeconds, 1);
 
   return (
     <AppShell>
-      <div className="px-4 py-6 md:px-8 md:py-8 max-w-2xl mx-auto pb-24">
+      <div className="max-w-[800px] mx-auto px-5 py-8 md:px-8 pb-24">
         {/* Back */}
         <button
           onClick={() => navigate({ to: "/training" })}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-4 transition-colors"
+          className="flex items-center gap-1 text-[13px] text-primary hover:opacity-70 transition-opacity mb-6"
         >
-          <ArrowLeft size={14} /> Zurück
+          <ArrowLeft size={14} strokeWidth={1.5} /> Training
         </button>
 
         <AnimatePresence mode="wait">
           {/* ====== INTRO ====== */}
           {phase === "intro" && (
             <motion.div key="intro" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <div className="rounded-2xl bg-card border border-border p-5 mb-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={cn("rounded-full px-2.5 py-0.5 text-[11px] font-semibold", catColor)}>{catLabel}</span>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Clock size={12} /> {task.duration_min} Min.
-                  </div>
-                  <div className="flex items-center gap-1 ml-auto">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className={cn("w-2 h-2 rounded-full", i < dots ? "bg-primary" : "bg-muted")} />
-                    ))}
-                  </div>
+              <p className="text-[11px] uppercase tracking-wider text-tertiary mb-2">{catLabel}</p>
+              <h1 className="font-display text-[28px] text-foreground tracking-[-0.3px] leading-[1.2] mb-4">
+                {task.title}
+              </h1>
+
+              {/* Tags */}
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-xs text-tertiary">{task.duration_min} Min.</span>
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className={cn("w-[5px] h-[5px] rounded-full", i < dots ? "bg-primary" : "bg-[#E0E0E0]")} />
+                  ))}
                 </div>
-
-                <h1 className="font-display font-bold text-lg text-foreground mb-3">{task.title}</h1>
-                
-                {task.description && (
-                  <div className="rounded-xl bg-secondary/50 p-4 mb-5">
-                    <h3 className="text-xs font-semibold text-primary mb-1.5">💡 Warum hilft das?</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{task.description}</p>
-                  </div>
-                )}
-
-                {/* Steps */}
-                {task.instructions && task.instructions.length > 0 && (
-                  <div className="space-y-2 mb-5">
-                    <h3 className="text-xs font-semibold text-foreground mb-2">Schritte</h3>
-                    {task.instructions.map((step, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setExpandedStep(expandedStep === i ? null : i)}
-                        className="w-full text-left rounded-xl bg-secondary/30 border border-border/50 p-3 transition-all hover:border-border"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/15 text-primary text-[11px] font-bold flex items-center justify-center">
-                            {i + 1}
-                          </span>
-                          <span className="text-xs text-foreground/80 flex-1">{step}</span>
-                          {expandedStep === i ? <ChevronUp size={12} className="text-muted-foreground" /> : <ChevronDown size={12} className="text-muted-foreground" />}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <GreenButton onClick={handleStartExercise} className="w-full">
-                  <Play size={16} /> Aufgabe starten
-                </GreenButton>
+                <span className="text-xs text-tertiary">{catLabel.charAt(0) + catLabel.slice(1).toLowerCase()}</span>
               </div>
+
+              {/* Why this helps */}
+              {task.description && (
+                <div className="border-l-2 border-primary pl-4 mb-6">
+                  <p className="text-xs uppercase tracking-wider text-tertiary mb-1">Warum hilft das?</p>
+                  <p className="text-[13px] text-tertiary font-light italic leading-relaxed">{task.description}</p>
+                </div>
+              )}
+
+              {/* Steps */}
+              {task.instructions && task.instructions.length > 0 && (
+                <div className="space-y-3 mb-8">
+                  {task.instructions.map((step, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <span className="text-xs text-tertiary mt-0.5 shrink-0 w-4">{i + 1}.</span>
+                      <p className="text-sm text-foreground/80 font-light leading-relaxed">{step}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={() => setPhase("mood-before")}
+                className="w-full rounded-[10px] bg-primary text-primary-foreground px-[22px] py-[11px] text-[13px] font-medium hover:opacity-90 transition-opacity"
+              >
+                Aufgabe starten →
+              </button>
             </motion.div>
           )}
 
@@ -260,65 +221,52 @@ function TaskDetailPage() {
             <motion.div key="mood-before" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <MoodPicker
                 title="Wie fühlst du dich gerade?"
-                subtitle="Mood-Check vor der Übung"
                 value={moodBefore}
                 onChange={setMoodBefore}
-                onContinue={handleMoodBeforeDone}
+                onContinue={() => { setPhase("active"); startTimer(); }}
               />
             </motion.div>
           )}
 
-          {/* ====== ACTIVE / TIMER ====== */}
+          {/* ====== TIMER ====== */}
           {phase === "active" && (
             <motion.div key="active" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <div className="rounded-2xl bg-card border border-border p-6 text-center">
-                <h2 className="font-display font-bold text-foreground mb-2">{task.title}</h2>
-                <p className="text-xs text-muted-foreground mb-6">Folge den Schritten und nimm dir Zeit.</p>
-
+              <div className="text-center">
                 {/* Timer ring */}
-                <div className="relative w-40 h-40 mx-auto mb-6">
+                <div className="relative w-52 h-52 mx-auto mb-6">
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="54" fill="none" stroke="var(--color-muted)" strokeWidth="6" />
+                    <circle cx="60" cy="60" r="54" fill="none" stroke="var(--color-border)" strokeWidth="3" />
                     <circle
                       cx="60" cy="60" r="54"
                       fill="none"
                       stroke="var(--color-primary)"
-                      strokeWidth="6"
+                      strokeWidth="3"
                       strokeLinecap="round"
                       strokeDasharray={`${2 * Math.PI * 54}`}
                       strokeDashoffset={`${2 * Math.PI * 54 * (1 - progress)}`}
                       className="transition-all duration-1000"
-                      style={{ filter: "drop-shadow(0 0 8px oklch(0.85 0.22 155 / 0.5))" }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="font-display font-bold text-2xl text-foreground">{formatTime(elapsed)}</span>
-                    <span className="text-[10px] text-muted-foreground">/ {task.duration_min}:00</span>
+                    <span className="font-display text-5xl text-foreground tracking-tight">{formatTime(remaining)}</span>
                   </div>
                 </div>
 
-                {/* Steps list */}
-                {task.instructions && (
-                  <div className="text-left space-y-1.5 mb-6 max-w-xs mx-auto">
-                    {task.instructions.map((step, i) => (
-                      <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                        <span className="text-primary font-bold mt-0.5">{i + 1}.</span>
-                        <span>{step}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <p className="text-sm text-tertiary font-light mb-8">{task.title}</p>
 
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-4">
                   <button
                     onClick={running ? pauseTimer : startTimer}
-                    className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center text-foreground hover:bg-secondary/80 transition-colors"
+                    className="rounded-[10px] border border-border px-6 py-[11px] text-[13px] text-foreground hover:bg-muted/30 transition-colors"
                   >
-                    {running ? <Pause size={20} /> : <Play size={20} />}
+                    {running ? <><Pause size={14} strokeWidth={1.5} className="inline mr-1.5" />Pause</> : <><Play size={14} strokeWidth={1.5} className="inline mr-1.5" />Fortsetzen</>}
                   </button>
-                  <GreenButton onClick={handleFinishExercise}>
-                    <CheckCircle2 size={16} /> Übung beenden
-                  </GreenButton>
+                  <button
+                    onClick={() => { pauseTimer(); setPhase("mood-after"); }}
+                    className="rounded-[10px] bg-primary text-primary-foreground px-6 py-[11px] text-[13px] font-medium hover:opacity-90 transition-opacity"
+                  >
+                    Übung beenden
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -328,11 +276,10 @@ function TaskDetailPage() {
           {phase === "mood-after" && (
             <motion.div key="mood-after" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <MoodPicker
-                title="Wie fühlst du dich jetzt?"
-                subtitle="Mood-Check nach der Übung"
+                title="Wie geht es dir jetzt?"
                 value={moodAfter}
                 onChange={setMoodAfter}
-                onContinue={handleMoodAfterDone}
+                onContinue={() => setPhase("reflection")}
               />
             </motion.div>
           )}
@@ -340,53 +287,64 @@ function TaskDetailPage() {
           {/* ====== REFLECTION ====== */}
           {phase === "reflection" && (
             <motion.div key="reflection" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <div className="rounded-2xl bg-card border border-border p-5">
-                <h2 className="font-display font-bold text-foreground mb-1">📝 Reflexion</h2>
-                <p className="text-xs text-muted-foreground mb-4">Was nimmst du aus dieser Übung mit?</p>
+              <h2 className="font-display text-2xl text-foreground mb-1">Reflexion</h2>
+              <p className="text-sm text-tertiary font-light mb-5">Was nimmst du aus dieser Übung mit?</p>
 
-                <Textarea
-                  value={reflection}
-                  onChange={(e) => setReflection(e.target.value)}
-                  placeholder="z.B. Ich habe gemerkt, dass tiefes Atmen mir wirklich hilft..."
-                  className="bg-secondary border-border min-h-[100px] mb-4"
-                  maxLength={1000}
-                />
+              <Textarea
+                value={reflection}
+                onChange={(e) => setReflection(e.target.value)}
+                placeholder="Kurze Reflexion (optional)..."
+                className="bg-transparent border-border rounded-2xl px-4 py-3 text-sm min-h-[100px] focus-visible:ring-0 focus-visible:border-primary mb-5"
+                maxLength={300}
+              />
 
-                <GreenButton onClick={handleSubmit} disabled={submitting} className="w-full">
-                  {submitting ? "Wird gespeichert..." : "Abschließen (+20 XP)"}
-                </GreenButton>
-              </div>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="w-full rounded-[10px] bg-primary text-primary-foreground px-[22px] py-[11px] text-[13px] font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {submitting ? "Wird gespeichert..." : "Abschließen (+20 XP)"}
+              </button>
             </motion.div>
           )}
 
           {/* ====== DONE ====== */}
           {phase === "done" && (
-            <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-              <div className="rounded-2xl bg-card border border-primary/30 p-6 text-center">
-                <div className="text-5xl mb-4">🎉</div>
-                <h2 className="font-display font-bold text-lg text-foreground mb-2">Großartig gemacht!</h2>
-                <p className="text-sm text-muted-foreground mb-2">Du hast "{task.title}" abgeschlossen.</p>
-                <p className="text-primary font-display font-bold text-lg mb-1">+20 XP</p>
-                <p className="text-xs text-muted-foreground mb-6">Dauer: {formatTime(elapsed)}</p>
+            <motion.div key="done" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>
+              <div className="text-center py-8">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                  className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5"
+                >
+                  <Check size={28} strokeWidth={1.5} className="text-primary" />
+                </motion.div>
+
+                <h2 className="font-display text-2xl text-foreground mb-2">Großartig gemacht.</h2>
+                <p className="text-sm text-tertiary font-light mb-1">Du hast „{task.title}" abgeschlossen.</p>
+                <p className="text-primary text-lg font-display mb-1">+20 XP</p>
+                <p className="text-xs text-tertiary mb-8">Dauer: {formatTime(elapsed)}</p>
 
                 {moodBefore !== null && moodAfter !== null && (
-                  <div className="flex items-center justify-center gap-3 mb-6">
+                  <div className="flex items-center justify-center gap-6 mb-8">
                     <div className="text-center">
-                      <span className="text-2xl">{moodEmojis.find((m) => m.value === moodBefore)?.emoji}</span>
-                      <p className="text-[10px] text-muted-foreground mt-1">Vorher</p>
+                      <p className="text-xs text-tertiary mb-1">Vorher</p>
+                      <p className="text-sm text-foreground">{moodLabels.find((m) => m.value === moodBefore)?.label}</p>
                     </div>
-                    <span className="text-muted-foreground">→</span>
+                    <span className="text-tertiary">→</span>
                     <div className="text-center">
-                      <span className="text-2xl">{moodEmojis.find((m) => m.value === moodAfter)?.emoji}</span>
-                      <p className="text-[10px] text-muted-foreground mt-1">Nachher</p>
+                      <p className="text-xs text-tertiary mb-1">Nachher</p>
+                      <p className="text-sm text-foreground">{moodLabels.find((m) => m.value === moodAfter)?.label}</p>
                     </div>
                   </div>
                 )}
 
-                <Link to="/training">
-                  <GreenButton variant="outline" className="w-full">
-                    ← Zurück zum Training
-                  </GreenButton>
+                <Link
+                  to="/training"
+                  className="inline-flex rounded-[10px] border border-border px-6 py-[11px] text-[13px] text-foreground hover:bg-muted/30 transition-colors"
+                >
+                  ← Zurück zum Training
                 </Link>
               </div>
             </motion.div>
@@ -398,40 +356,55 @@ function TaskDetailPage() {
 }
 
 function MoodPicker({
-  title, subtitle, value, onChange, onContinue,
+  title, value, onChange, onContinue,
 }: {
   title: string;
-  subtitle: string;
   value: number | null;
   onChange: (v: number) => void;
   onContinue: () => void;
 }) {
   return (
-    <div className="rounded-2xl bg-card border border-border p-5 text-center">
-      <h2 className="font-display font-bold text-foreground mb-1">{title}</h2>
-      <p className="text-xs text-muted-foreground mb-6">{subtitle}</p>
+    <div className="text-center">
+      <h2 className="font-display text-2xl text-foreground mb-6">{title}</h2>
 
-      <div className="flex items-center justify-center gap-3 mb-6">
-        {moodEmojis.map((mood) => (
-          <button
-            key={mood.value}
-            onClick={() => onChange(mood.value)}
-            className={cn(
-              "flex flex-col items-center gap-1 p-2 rounded-xl transition-all",
-              value === mood.value
-                ? "bg-primary/15 scale-110 ring-2 ring-primary/30"
-                : "hover:bg-secondary"
-            )}
-          >
-            <span className="text-2xl">{mood.emoji}</span>
-            <span className="text-[9px] text-muted-foreground">{mood.label}</span>
-          </button>
-        ))}
+      {/* Mood scale */}
+      <div className="relative max-w-xs mx-auto mb-8">
+        {/* Line */}
+        <div className="absolute top-3 left-0 right-0 h-px bg-border" />
+        
+        <div className="flex items-start justify-between relative">
+          {moodLabels.map((mood) => (
+            <button
+              key={mood.value}
+              onClick={() => onChange(mood.value)}
+              className="flex flex-col items-center gap-2 z-10"
+            >
+              <div
+                className={cn(
+                  "w-6 h-6 rounded-full border-2 transition-all",
+                  value === mood.value
+                    ? "bg-primary border-primary scale-125"
+                    : "bg-card border-border hover:border-foreground/30"
+                )}
+              />
+              <span className={cn(
+                "text-[10px] transition-colors",
+                value === mood.value ? "text-foreground" : "text-tertiary"
+              )}>
+                {mood.label}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <GreenButton onClick={onContinue} disabled={value === null} className="w-full">
+      <button
+        onClick={onContinue}
+        disabled={value === null}
+        className="w-full max-w-xs mx-auto rounded-[10px] bg-primary text-primary-foreground px-[22px] py-[11px] text-[13px] font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+      >
         Weiter
-      </GreenButton>
+      </button>
     </div>
   );
 }
