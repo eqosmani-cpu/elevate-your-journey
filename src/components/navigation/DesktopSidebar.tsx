@@ -7,7 +7,7 @@ const mainNavItems = [
   { to: "/community", icon: MessageSquare, label: "Community", proFeature: false },
   { to: "/training", icon: Brain, label: "Training", proFeature: false },
   { to: "/blocks", icon: Lock, label: "Block Breaker", proFeature: true },
-  { to: "/coaching", icon: CalendarDays, label: "Coaching buchen", proFeature: false },
+  { to: "/coaching", icon: CalendarDays, label: "Coaching", proFeature: false },
 ] as const;
 
 const profileNavItems = [
