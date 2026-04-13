@@ -131,6 +131,10 @@
   --skeleton-bg: #F0EFEB;
 }
 
+.dark {
+  color-scheme: light;
+}
+
 /* ============================================
    GLOBAL ANIMATION KEYFRAMES
    ============================================ */
