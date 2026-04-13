@@ -1,11 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/navigation/AppShell";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { StreakBadge } from "@/components/ui/StreakBadge";
 import { TierBadge } from "@/components/ui/TierBadge";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { GreenButton } from "@/components/ui/GreenButton";
+import { UpgradeModal } from "@/components/upgrade/UpgradeModal";
 import { Settings, ChevronRight, Award, BookOpen, Zap } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -18,6 +22,30 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
+  const navigate = useNavigate();
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  const handleMenuClick = async (item: string) => {
+    switch (item) {
+      case "Erfolge & Abzeichen":
+        navigate({ to: "/progress" });
+        break;
+      case "Abo verwalten":
+        setShowUpgrade(true);
+        break;
+      case "Benachrichtigungen":
+        toast.info("Benachrichtigungseinstellungen kommen bald.");
+        break;
+      case "Hilfe & Support":
+        window.open("mailto:support@mindpitch.app", "_blank");
+        break;
+      case "Abmelden":
+        await supabase.auth.signOut();
+        navigate({ to: "/login" });
+        break;
+    }
+  };
+
   return (
     <AppShell>
       <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto">
@@ -80,6 +108,7 @@ function ProfilePage() {
           ].map((item, i, arr) => (
             <button
               key={item}
+              onClick={() => handleMenuClick(item)}
               className={`w-full flex items-center justify-between px-4 py-3.5 text-sm text-card-foreground hover:bg-muted/30 transition-colors ${
                 i < arr.length - 1 ? "border-b border-border" : ""
               } ${item === "Abmelden" ? "text-destructive" : ""}`}
@@ -89,6 +118,8 @@ function ProfilePage() {
             </button>
           ))}
         </div>
+
+        <UpgradeModal open={showUpgrade} onOpenChange={setShowUpgrade} />
       </div>
     </AppShell>
   );
