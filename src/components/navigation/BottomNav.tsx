@@ -1,12 +1,12 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, MessageSquare, Compass, BarChart3, User } from "lucide-react";
+import { Home, MessageSquare, Brain, CalendarDays, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { to: "/", icon: Home, label: "Home" },
+  { to: "/", icon: Home, label: "Übersicht" },
   { to: "/community", icon: MessageSquare, label: "Community" },
-  { to: "/training", icon: Compass, label: "Training" },
-  { to: "/progress", icon: BarChart3, label: "Fortschritt" },
+  { to: "/training", icon: Brain, label: "Training" },
+  { to: "/coaching", icon: CalendarDays, label: "Coaching" },
   { to: "/profile", icon: User, label: "Profil" },
 ] as const;
 
@@ -14,7 +14,9 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/90 backdrop-blur-xl border-t border-border md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border md:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
       <div className="flex items-center justify-around h-14 px-2">
         {navItems.map((item) => {
           const isActive = item.to === "/"
@@ -30,11 +32,11 @@ export function BottomNav() {
                 "flex flex-col items-center gap-0.5 px-3 py-1.5 transition-colors duration-200",
                 isActive
                   ? "text-primary"
-                  : "text-tertiary hover:text-muted-foreground"
+                  : "text-tertiary"
               )}
             >
               <Icon size={20} strokeWidth={1.5} />
-              <span className="text-[10px] font-light tracking-label uppercase">{item.label}</span>
+              <span className="text-[10px] tracking-label uppercase">{item.label}</span>
             </Link>
           );
         })}
