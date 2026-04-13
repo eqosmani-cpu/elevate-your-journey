@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GreenButton } from "@/components/ui/GreenButton";
 import { Textarea } from "@/components/ui/textarea";
 import { AiTaskCard, AiGenerateButton } from "@/components/ai/AiTaskCard";
 import { useAiTaskGenerator } from "@/hooks/useAiCoach";
@@ -8,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Lock, CheckCircle2 } from "lucide-react";
+import { Check } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 interface StepData {
@@ -29,7 +28,7 @@ export function ProgramView({ progress }: ProgramViewProps) {
   const queryClient = useQueryClient();
   const [reflection, setReflection] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [showComplete, setShowComplete] = useState(false);
   const { task: aiTask, loading: aiLoading, generate: generateAiTask, clear: clearAiTask } = useAiTaskGenerator();
 
   const program = progress.block_programs;
@@ -39,11 +38,9 @@ export function ProgramView({ progress }: ProgramViewProps) {
   const currentStep = progress.current_step;
   const startedAt = new Date(progress.started_at);
 
-  // Check which days are unlocked (24h gap)
   const isDayUnlocked = (day: number) => {
     if (day === 1) return true;
     if (day <= currentStep) return true;
-    // Next day is unlocked only if 24h have passed since start + (day-2)*24h
     const unlockTime = new Date(startedAt.getTime() + (day - 1) * 24 * 60 * 60 * 1000);
     return day === currentStep + 1 && new Date() >= unlockTime;
   };
@@ -68,7 +65,6 @@ export function ProgramView({ progress }: ProgramViewProps) {
         })
         .eq("id", progress.id);
 
-      // XP for each step
       await supabase.rpc("add_xp", {
         _user_id: user.id,
         _points: isComplete ? 100 : 20,
@@ -77,8 +73,8 @@ export function ProgramView({ progress }: ProgramViewProps) {
       });
 
       if (isComplete) {
-        setShowConfetti(true);
-        toast.success("🏆 Block Breaker abgeschlossen! +100 XP");
+        setShowComplete(true);
+        toast.success("Block Breaker abgeschlossen! +100 XP");
       } else {
         toast.success(`+20 XP! Tag ${currentStep} geschafft`);
       }
@@ -94,122 +90,151 @@ export function ProgramView({ progress }: ProgramViewProps) {
 
   return (
     <div>
-      {/* Timeline */}
-      <div className="flex items-center justify-between mb-6 px-2">
-        {steps.map((step, i) => {
-          const day = step.day;
-          const isCompleted = day < currentStep;
-          const isCurrent = day === currentStep;
-          const unlocked = isDayUnlocked(day);
+      {/* Vertical timeline */}
+      <div className="mb-8">
+        <p className="text-xs uppercase tracking-wider text-tertiary mb-4">Programmverlauf</p>
+        <div className="relative pl-6">
+          {/* Vertical line */}
+          <div className="absolute left-[7px] top-1 bottom-1 w-px bg-border" />
 
-          return (
-            <div key={day} className="flex flex-col items-center gap-1.5 relative">
-              {i > 0 && (
+          {steps.map((step) => {
+            const isCompleted = step.day < currentStep;
+            const isCurrent = step.day === currentStep;
+            const unlocked = isDayUnlocked(step.day);
+
+            return (
+              <div key={step.day} className="relative pb-5 last:pb-0">
+                {/* Dot */}
                 <div className={cn(
-                  "absolute top-3.5 -left-[calc(50%+8px)] w-[calc(100%-16px)] h-0.5",
-                  isCompleted ? "bg-primary" : "bg-muted"
-                )} style={{ width: "calc(100% + 16px)", left: "calc(-50% - 8px)" }} />
-              )}
-              <div className={cn(
-                "relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all",
-                isCompleted && "bg-primary text-primary-foreground",
-                isCurrent && "bg-primary/20 text-primary ring-2 ring-primary animate-pulse",
-                !isCompleted && !isCurrent && unlocked && "bg-secondary text-muted-foreground",
-                !isCompleted && !isCurrent && !unlocked && "bg-muted/30 text-muted-foreground/50"
-              )}>
-                {isCompleted ? <CheckCircle2 size={14} /> : !unlocked && !isCurrent ? <Lock size={10} /> : day}
+                  "absolute left-[-18px] w-3.5 h-3.5 rounded-full border-2 transition-all",
+                  isCompleted
+                    ? "bg-primary border-primary"
+                    : isCurrent
+                      ? "bg-card border-primary"
+                      : "bg-card border-border"
+                )}>
+                  {isCompleted && (
+                    <Check size={8} strokeWidth={2.5} className="text-primary-foreground absolute top-0.5 left-0.5" />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className={cn(
+                  "transition-opacity",
+                  !isCompleted && !isCurrent && !unlocked && "opacity-40"
+                )}>
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "text-xs",
+                      isCompleted ? "text-tertiary line-through" : "text-foreground"
+                    )}>
+                      Tag {step.day}
+                    </span>
+                    <span className="text-xs text-tertiary">· {step.duration_min} Min.</span>
+                    {!isCompleted && !isCurrent && !unlocked && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-tertiary">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                    )}
+                  </div>
+                  <p className={cn(
+                    "text-sm mt-0.5",
+                    isCurrent ? "text-foreground" : "text-tertiary"
+                  )}>
+                    {step.title}
+                  </p>
+                </div>
               </div>
-              <span className="text-[9px] text-muted-foreground font-medium">{step.title}</span>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
         {/* Completion screen */}
-        {(isLastStep || showConfetti) && (
+        {(isLastStep || showComplete) && (
           <motion.div
             key="complete"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-2xl border border-primary/30 bg-card p-6 text-center"
+            className="text-center py-8"
           >
-            <div className="text-6xl mb-4">🏆</div>
-            <h2 className="font-display font-bold text-xl text-foreground mb-2">Block Breaker geschafft!</h2>
-            <p className="text-sm text-muted-foreground mb-2">Du hast das Programm "{program.title}" abgeschlossen.</p>
-            <p className="text-primary font-display font-bold text-2xl mb-1">+100 XP</p>
-            <p className="text-xs text-muted-foreground mb-6">🏆 Block Breaker Badge freigeschaltet</p>
-            <div className="rounded-xl bg-secondary/50 p-4 text-left mb-4">
-              <h3 className="text-xs font-semibold text-primary mb-1">💡 Empfehlung</h3>
-              <p className="text-xs text-muted-foreground">Buche eine Coaching-Session, um deine Fortschritte mit einem Profi zu besprechen und das Gelernte zu vertiefen.</p>
-            </div>
+            <h2 className="font-display text-[32px] text-foreground tracking-[-0.5px] mb-2">
+              Block Breaker abgeschlossen.
+            </h2>
+            <p className="text-[15px] text-tertiary font-light mb-6">
+              Du hast heute etwas Wichtiges getan.
+            </p>
+            <p className="text-primary font-display text-xl mb-8">+100 XP</p>
 
-            {/* AI follow-up exercises */}
             {aiTask ? (
               <AiTaskCard task={aiTask} onDismiss={clearAiTask} />
             ) : (
               <AiGenerateButton
                 loading={aiLoading}
                 onClick={() => generateAiTask(`Weiterführende Übung nach Block Breaker: ${program.title}`)}
-                label="Weiterführende Übungen von KI ✨"
-                className="w-full"
+                label="Weiterführende Übungen"
+                className="w-full max-w-sm mx-auto"
               />
             )}
           </motion.div>
         )}
 
-        {/* Current step */}
-        {currentStepData && !isLastStep && !showConfetti && (
+        {/* Current step content */}
+        {currentStepData && !isLastStep && !showComplete && (
           <motion.div
             key={`step-${currentStep}`}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
           >
-            <div className="rounded-2xl bg-card border border-border p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 text-primary px-2.5 py-0.5 text-[11px] font-semibold">
-                  Tag {currentStepData.day}
-                </span>
-                <span className="text-xs text-muted-foreground">{currentStepData.duration_min} Min.</span>
-              </div>
+            {/* Eyebrow */}
+            <p className="text-[11px] uppercase tracking-wider text-tertiary mb-2">
+              Tag {currentStepData.day} · {currentStepData.duration_min} Min.
+            </p>
 
-              <h2 className="font-display font-bold text-lg text-foreground mb-0.5">{currentStepData.title}</h2>
-              <p className="text-xs text-primary/70 font-medium mb-4">{currentStepData.subtitle}</p>
+            <h2 className="font-display text-[28px] text-foreground tracking-[-0.3px] leading-[1.2] mb-1">
+              {currentStepData.title}
+            </h2>
+            <p className="text-sm text-primary font-light mb-5">{currentStepData.subtitle}</p>
 
-              {/* Explanation */}
-              <div className="rounded-xl bg-secondary/30 p-4 mb-4">
-                <p className="text-sm text-foreground/80 leading-relaxed">{currentStepData.text}</p>
-              </div>
-
-              {/* Exercise */}
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 mb-4">
-                <h3 className="text-xs font-semibold text-primary mb-2">📝 Übung</h3>
-                <p className="text-sm text-foreground/80 leading-relaxed">{currentStepData.exercise}</p>
-              </div>
-
-              {/* Reflection */}
-              {currentStepData.has_reflection && (
-                <div className="mb-4">
-                  <label className="text-xs font-semibold text-foreground mb-2 block">Deine Reflexion</label>
-                  <Textarea
-                    value={reflection}
-                    onChange={(e) => setReflection(e.target.value)}
-                    placeholder="Was nimmst du aus dieser Übung mit?"
-                    className="bg-secondary border-border min-h-[80px]"
-                    maxLength={2000}
-                  />
-                </div>
-              )}
-
-              <GreenButton
-                onClick={handleCompleteStep}
-                disabled={submitting || (currentStepData.has_reflection && !reflection.trim())}
-                className="w-full"
-              >
-                {submitting ? "Wird gespeichert..." : currentStep === steps.length ? "Programm abschließen (+100 XP)" : `Tag ${currentStep} abschließen (+20 XP)`}
-              </GreenButton>
+            {/* Body text */}
+            <div className="text-[15px] text-foreground/85 font-light leading-[1.7] mb-6 whitespace-pre-wrap">
+              {currentStepData.text}
             </div>
+
+            {/* Exercise section */}
+            <div className="border-t border-border pt-5 mb-6">
+              <p className="text-[11px] uppercase tracking-wider text-tertiary mb-3">Übung</p>
+              <p className="text-sm text-foreground/80 font-light leading-relaxed">
+                {currentStepData.exercise}
+              </p>
+            </div>
+
+            {/* Reflection */}
+            {currentStepData.has_reflection && (
+              <div className="mb-6">
+                <Textarea
+                  value={reflection}
+                  onChange={(e) => setReflection(e.target.value)}
+                  placeholder="Deine Reflexion zu dieser Übung..."
+                  className="bg-transparent border-border rounded-2xl px-4 py-3 text-sm min-h-[80px] focus-visible:ring-0 focus-visible:border-primary"
+                  maxLength={2000}
+                />
+              </div>
+            )}
+
+            <button
+              onClick={handleCompleteStep}
+              disabled={submitting || (currentStepData.has_reflection && !reflection.trim())}
+              className="w-full rounded-[10px] bg-primary text-primary-foreground px-[22px] py-[11px] text-[13px] font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+            >
+              {submitting
+                ? "Wird gespeichert..."
+                : currentStep === steps.length
+                  ? "Programm abschließen (+100 XP)"
+                  : `Tag abschließen (+20 XP)`}
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
