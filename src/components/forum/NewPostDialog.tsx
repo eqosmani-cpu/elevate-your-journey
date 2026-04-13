@@ -2,22 +2,21 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { GreenButton } from "@/components/ui/GreenButton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 
 type ForumCategory = Database["public"]["Enums"]["forum_category"];
 
 const categories: { value: ForumCategory; label: string }[] = [
-  { value: "question", label: "🤔 Frage" },
-  { value: "experience", label: "📖 Erfahrung" },
-  { value: "tip", label: "💡 Tipp" },
-  { value: "challenge", label: "🏆 Challenge" },
-  { value: "motivation", label: "💪 Motivation" },
+  { value: "question", label: "Frage" },
+  { value: "experience", label: "Erfahrung" },
+  { value: "tip", label: "Tipp" },
+  { value: "challenge", label: "Challenge" },
+  { value: "motivation", label: "Motivation" },
 ];
 
 interface NewPostDialogProps {
@@ -30,7 +29,6 @@ export function NewPostDialog({ open, onOpenChange, onPostCreated }: NewPostDial
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState<ForumCategory>("question");
-  const [tags, setTags] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -39,30 +37,20 @@ export function NewPostDialog({ open, onOpenChange, onPostCreated }: NewPostDial
       toast.error("Titel und Inhalt sind erforderlich.");
       return;
     }
-
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error("Bitte melde dich an."); return; }
 
-      const parsedTags = tags
-        .split(",")
-        .map((t) => t.trim().replace(/^#/, ""))
-        .filter(Boolean)
-        .slice(0, 5);
-
       const { error } = await supabase.from("forum_posts").insert({
         title: title.trim(),
         content: content.trim(),
         category,
-        tags: parsedTags.length ? parsedTags : null,
         is_anonymous: isAnonymous,
         user_id: user.id,
       });
-
       if (error) throw error;
 
-      // Award XP for posting
       await supabase.rpc("add_xp", {
         _user_id: user.id,
         _points: 15,
@@ -70,11 +58,11 @@ export function NewPostDialog({ open, onOpenChange, onPostCreated }: NewPostDial
         _source: "forum_post",
       });
 
-      toast.success("+15 XP! Beitrag erstellt 🎉");
-      setTitle(""); setContent(""); setTags(""); setIsAnonymous(false);
+      toast.success("+15 XP! Beitrag erstellt");
+      setTitle(""); setContent(""); setIsAnonymous(false);
       onOpenChange(false);
       onPostCreated();
-    } catch (err) {
+    } catch {
       toast.error("Fehler beim Erstellen des Beitrags.");
     } finally {
       setSubmitting(false);
@@ -83,72 +71,81 @@ export function NewPostDialog({ open, onOpenChange, onPostCreated }: NewPostDial
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border max-w-lg">
+      <DialogContent className="bg-card border-border max-w-lg rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="font-display text-foreground">Neuer Beitrag</DialogTitle>
-          <DialogDescription className="text-muted-foreground">
+          <DialogTitle className="font-display text-2xl text-foreground">Neue Frage stellen</DialogTitle>
+          <DialogDescription className="text-tertiary text-sm font-light">
             Teile deine Frage oder Erfahrung mit der Community.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-2">
+        <div className="space-y-5 mt-3">
+          {/* Category segmented control */}
           <div>
-            <Label className="text-xs text-muted-foreground mb-1.5 block">Kategorie</Label>
-            <Select value={category} onValueChange={(v) => setCategory(v as ForumCategory)}>
-              <SelectTrigger className="bg-secondary border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label className="text-xs text-tertiary mb-2 block uppercase tracking-wider">Kategorie</Label>
+            <div className="flex gap-1 bg-muted rounded-xl p-1">
+              {categories.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => setCategory(c.value)}
+                  className={cn(
+                    "flex-1 rounded-lg py-1.5 text-[12px] font-medium transition-all",
+                    category === c.value
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-tertiary hover:text-foreground"
+                  )}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
-            <Label className="text-xs text-muted-foreground mb-1.5 block">Titel</Label>
+            <Label className="text-xs text-tertiary mb-1.5 block uppercase tracking-wider">Titel</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="z.B. Wie geht ihr mit Nervosität um?"
-              className="bg-secondary border-border"
+              className="bg-transparent border-border rounded-2xl px-4 py-3 text-sm focus-visible:ring-0 focus-visible:border-primary"
               maxLength={200}
             />
           </div>
 
           <div>
-            <Label className="text-xs text-muted-foreground mb-1.5 block">Inhalt</Label>
+            <Label className="text-xs text-tertiary mb-1.5 block uppercase tracking-wider">Inhalt</Label>
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Beschreibe dein Anliegen..."
-              className="bg-secondary border-border min-h-[120px]"
+              className="bg-transparent border-border rounded-2xl px-4 py-3 text-sm min-h-[120px] focus-visible:ring-0 focus-visible:border-primary"
               maxLength={5000}
             />
           </div>
 
-          <div>
-            <Label className="text-xs text-muted-foreground mb-1.5 block">Tags (kommagetrennt)</Label>
-            <Input
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="#versagensangst, #torwart"
-              className="bg-secondary border-border"
-            />
-          </div>
-
-          <div className="flex items-center justify-between rounded-xl bg-secondary/50 p-3">
+          <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
               <Label className="text-sm text-foreground">Anonym posten</Label>
-              <p className="text-[11px] text-muted-foreground">Dein Name wird als "Spieler #XXXX" angezeigt</p>
+              <p className="text-[11px] text-tertiary">Dein Name wird als „Spieler #XXXX" angezeigt</p>
             </div>
             <Switch checked={isAnonymous} onCheckedChange={setIsAnonymous} />
           </div>
 
-          <GreenButton onClick={handleSubmit} disabled={submitting} className="w-full">
-            {submitting ? "Wird gepostet..." : "Beitrag veröffentlichen (+15 XP)"}
-          </GreenButton>
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={() => onOpenChange(false)}
+              className="flex-1 rounded-[10px] border border-border px-4 py-[11px] text-[13px] text-foreground hover:bg-muted/30 transition-colors"
+            >
+              Abbrechen
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="flex-1 rounded-[10px] bg-primary text-primary-foreground px-4 py-[11px] text-[13px] font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {submitting ? "Wird gepostet..." : "Veröffentlichen (+15 XP)"}
+            </button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

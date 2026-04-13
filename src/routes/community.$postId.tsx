@@ -4,11 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/navigation/AppShell";
 import { useForumPost, useForumComments, useUserReactions } from "@/hooks/useForumPost";
 import { supabase } from "@/integrations/supabase/client";
-import { GreenButton } from "@/components/ui/GreenButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, Flag, Clock, Flame, MessageSquare, ThumbsUp, Lightbulb, Heart, Bot } from "lucide-react";
+import { ArrowLeft, Flag, ThumbsUp, MessageSquare, Heart, Bot, CheckCircle2 } from "lucide-react";
 import { useAiForumAnswer } from "@/hooks/useAiCoach";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
@@ -22,21 +21,6 @@ export const Route = createFileRoute("/community/$postId")({
   }),
   component: PostDetailPage,
 });
-
-const categoryConfig: Record<string, { label: string; color: string }> = {
-  question: { label: "Frage", color: "bg-blue-500/20 text-blue-400" },
-  experience: { label: "Erfahrung", color: "bg-purple-500/20 text-purple-400" },
-  motivation: { label: "Motivation", color: "bg-primary/20 text-primary" },
-  tip: { label: "Tipp", color: "bg-amber-500/20 text-amber-400" },
-  challenge: { label: "Challenge", color: "bg-rose-500/20 text-rose-400" },
-};
-
-const reactionTypes = [
-  { type: "upvote" as const, icon: ThumbsUp, label: "Upvote" },
-  { type: "fire" as const, icon: Flame, label: "Feuer" },
-  { type: "helpful" as const, icon: Lightbulb, label: "Hilfreich" },
-  { type: "relatable" as const, icon: Heart, label: "Kenne ich" },
-];
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -63,16 +47,13 @@ function PostDetailPage() {
 
   const handleAiAnswer = async () => {
     const answer = await generateAiAnswer(postId);
-    if (answer) {
-      queryClient.invalidateQueries({ queryKey: ["forum-comments", postId] });
-    }
+    if (answer) queryClient.invalidateQueries({ queryKey: ["forum-comments", postId] });
   };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id));
   }, []);
 
-  // Realtime comments
   useEffect(() => {
     const channel = supabase
       .channel(`comments-${postId}`)
@@ -90,7 +71,6 @@ function PostDetailPage() {
       await supabase.from("forum_reactions").delete().eq("id", existing.id);
     } else {
       await supabase.from("forum_reactions").insert({ post_id: postId, user_id: userId, type });
-      // XP for upvotes received
       if (type === "upvote" && post?.user_id && post.user_id !== userId) {
         await supabase.rpc("add_xp", { _user_id: post.user_id, _points: 5, _reason: "Upvote erhalten", _source: "forum_post" });
       }
@@ -123,12 +103,11 @@ function PostDetailPage() {
     if (!userId || !post || post.user_id !== userId) return;
     await supabase.from("forum_comments").update({ is_accepted_answer: true }).eq("id", commentId);
     await supabase.from("forum_posts").update({ is_answered: true }).eq("id", postId);
-    // Find comment author and award XP
     const comment = comments?.find((c) => c.id === commentId);
     if (comment) {
       await supabase.rpc("add_xp", { _user_id: comment.user_id, _points: 25, _reason: "Beste Antwort", _source: "forum_answer" });
     }
-    toast.success("Als beste Antwort markiert! +25 XP für den Autor");
+    toast.success("Als beste Antwort markiert! +25 XP");
     queryClient.invalidateQueries({ queryKey: ["forum-comments", postId] });
     queryClient.invalidateQueries({ queryKey: ["forum-post", postId] });
   };
@@ -147,8 +126,8 @@ function PostDetailPage() {
   if (postLoading) {
     return (
       <AppShell>
-        <div className="px-4 py-6 max-w-3xl mx-auto space-y-4">
-          <Skeleton className="h-6 w-32" />
+        <div className="max-w-[800px] mx-auto px-5 py-8 space-y-4">
+          <Skeleton className="h-4 w-24" />
           <Skeleton className="h-8 w-3/4" />
           <Skeleton className="h-40 w-full" />
         </div>
@@ -159,117 +138,115 @@ function PostDetailPage() {
   if (!post) {
     return (
       <AppShell>
-        <div className="px-4 py-12 text-center">
-          <p className="text-muted-foreground">Beitrag nicht gefunden.</p>
-          <Link to="/community" className="text-primary text-sm mt-2 inline-block">← Zurück zur Community</Link>
+        <div className="max-w-[800px] mx-auto px-5 py-16 text-center">
+          <p className="text-tertiary text-sm font-light">Beitrag nicht gefunden.</p>
+          <Link to="/community" className="text-primary text-[13px] mt-3 inline-block">← Zurück zur Community</Link>
         </div>
       </AppShell>
     );
   }
 
-  const cat = categoryConfig[post.category] ?? categoryConfig.question;
   const authorName = post.is_anonymous ? `Spieler #${post.id.slice(0, 4).toUpperCase()}` : post.profiles?.name || "Anonym";
   const isAuthor = userId === post.user_id;
+  const upvoteActive = userReactions?.some((r) => r.type === "upvote");
+  const relatableActive = userReactions?.some((r) => r.type === "relatable");
 
   return (
     <AppShell>
-      <div className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto pb-24">
+      <div className="max-w-[800px] mx-auto px-5 py-8 md:px-8 pb-24">
         {/* Back */}
-        <button onClick={() => navigate({ to: "/community" })} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-4 transition-colors">
-          <ArrowLeft size={14} /> Zurück
+        <button
+          onClick={() => navigate({ to: "/community" })}
+          className="flex items-center gap-1 text-[13px] text-primary hover:opacity-70 transition-opacity mb-6"
+        >
+          <ArrowLeft size={14} strokeWidth={1.5} /> Community
         </button>
 
         {/* Post */}
-        <article className="rounded-2xl bg-card border border-border p-5">
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${cat.color}`}>{cat.label}</span>
-            {post.is_answered && (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/15 text-primary px-2 py-0.5 text-[10px] font-semibold">
-                <CheckCircle2 size={10} /> Beantwortet
-              </span>
-            )}
-            {post.tags?.map((tag) => (
-              <span key={tag} className="text-[10px] text-muted-foreground bg-secondary rounded-full px-2 py-0.5">#{tag}</span>
-            ))}
+        <article>
+          <h1 className="font-display text-[28px] text-foreground tracking-[-0.3px] leading-[1.2]">
+            {post.title}
+          </h1>
+
+          <div className="flex items-center gap-2 mt-3 text-[13px] text-tertiary">
+            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] text-tertiary shrink-0">
+              {authorName.charAt(0).toUpperCase()}
+            </div>
+            <span>{authorName}</span>
+            <span className="text-tertiary/50">·</span>
+            <span className="text-xs text-tertiary">Lvl {post.profiles?.level ?? 1}</span>
+            <span className="text-tertiary/50">·</span>
+            <span>{timeAgo(post.created_at)}</span>
           </div>
 
-          <h1 className="font-display font-bold text-lg text-foreground mb-2">{post.title}</h1>
+          <div className="border-b border-border my-5" />
 
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-4">
-            <span className="font-medium text-foreground/70">{authorName}</span>
-            <span className="text-primary/60 font-bold">Lv.{post.profiles?.level ?? 1}</span>
-            <span className="flex items-center gap-0.5"><Clock size={10} /> {timeAgo(post.created_at)}</span>
-          </div>
-
-          <div className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed mb-5">
+          <div className="text-[15px] text-foreground/85 whitespace-pre-wrap leading-[1.7] font-light">
             {post.content}
           </div>
 
           {/* Reactions */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {reactionTypes.map(({ type, icon: Icon, label }) => {
-              const active = userReactions?.some((r) => r.type === type);
-              return (
-                <button
-                  key={type}
-                  onClick={() => handleReaction(type)}
-                  className={cn(
-                    "flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-medium transition-all",
-                    active ? "bg-primary/20 text-primary border border-primary/30" : "bg-secondary text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Icon size={12} /> {label}
-                </button>
-              );
-            })}
+          <div className="flex items-center gap-4 mt-6 text-[13px] text-tertiary">
+            <button
+              onClick={() => handleReaction("upvote")}
+              className={cn("flex items-center gap-1 transition-colors", upvoteActive ? "text-primary" : "hover:text-foreground")}
+            >
+              <ThumbsUp size={14} strokeWidth={1.5} /> {post.upvotes}
+            </button>
+            <span className="flex items-center gap-1">
+              <MessageSquare size={14} strokeWidth={1.5} /> {post.comment_count}
+            </span>
+            <button
+              onClick={() => handleReaction("relatable")}
+              className={cn("flex items-center gap-1 transition-colors", relatableActive ? "text-primary" : "hover:text-foreground")}
+            >
+              <Heart size={14} strokeWidth={1.5} /> Kenne ich
+            </button>
             <button
               onClick={() => handleReport(post.id)}
-              className="ml-auto flex items-center gap-1 rounded-full px-2 py-1.5 text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+              className="ml-auto flex items-center gap-1 text-xs text-tertiary/50 hover:text-destructive transition-colors"
             >
-              <Flag size={10} /> Melden
+              <Flag size={12} strokeWidth={1.5} /> Melden
             </button>
           </div>
+
+          <div className="border-b border-border my-6" />
         </article>
 
         {/* Comments */}
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-semibold text-sm text-foreground flex items-center gap-1.5">
-              <MessageSquare size={14} /> {comments?.length ?? 0} Antworten
+        <div>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xs uppercase tracking-wider text-tertiary">
+              {comments?.length ?? 0} Antworten
             </h2>
             {userId && !post.is_answered && (comments?.length ?? 0) === 0 && (
               <button
                 onClick={handleAiAnswer}
                 disabled={aiAnswerLoading}
-                className="flex items-center gap-1.5 rounded-full bg-purple-500/15 text-purple-400 px-3 py-1.5 text-[11px] font-medium hover:bg-purple-500/25 transition-colors disabled:opacity-60"
+                className="flex items-center gap-1.5 text-[12px] text-tertiary hover:text-foreground transition-colors disabled:opacity-50"
               >
                 {aiAnswerLoading ? (
-                  <>
-                    <div className="w-3 h-3 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
-                    Generiert...
-                  </>
+                  <><div className="w-3 h-3 border-2 border-tertiary/30 border-t-tertiary rounded-full animate-spin" /> Generiert...</>
                 ) : (
-                  <>
-                    <Bot size={12} /> KI-Antwort anfordern
-                  </>
+                  <><Bot size={13} strokeWidth={1.5} /> KI-Antwort anfordern</>
                 )}
               </button>
             )}
           </div>
 
           {commentsLoading ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="rounded-xl bg-card border border-border p-4 space-y-2">
+                <div key={i} className="pl-5 py-3 space-y-2">
                   <Skeleton className="h-3 w-24" />
                   <Skeleton className="h-4 w-full" />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-0">
               {comments?.map((comment) => (
-                <CommentCard
+                <CommentRow
                   key={comment.id}
                   comment={comment}
                   isPostAuthor={isAuthor}
@@ -280,19 +257,25 @@ function PostDetailPage() {
             </div>
           )}
 
-          {/* New comment */}
+          {/* Reply input */}
           {userId && (
-            <div className="mt-5 rounded-2xl bg-card border border-border p-4">
+            <div className="mt-6">
               <Textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Deine Antwort..."
-                className="bg-secondary border-border min-h-[80px] mb-3"
+                className="bg-transparent border-border rounded-2xl px-4 py-3 text-sm min-h-[80px] focus-visible:ring-0 focus-visible:border-primary"
                 maxLength={3000}
               />
-              <GreenButton size="sm" onClick={handleComment} disabled={submitting || !newComment.trim()}>
-                {submitting ? "Wird gepostet..." : "Antworten (+5 XP)"}
-              </GreenButton>
+              <div className="flex justify-end mt-3">
+                <button
+                  onClick={handleComment}
+                  disabled={submitting || !newComment.trim()}
+                  className="rounded-[10px] border border-border px-5 py-2 text-[13px] text-foreground hover:bg-muted/30 transition-colors disabled:opacity-40"
+                >
+                  {submitting ? "Wird gepostet..." : "Antworten (+5 XP)"}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -301,7 +284,7 @@ function PostDetailPage() {
   );
 }
 
-function CommentCard({
+function CommentRow({
   comment,
   isPostAuthor,
   onAccept,
@@ -317,42 +300,39 @@ function CommentCard({
   return (
     <div
       className={cn(
-        "rounded-xl border p-4",
+        "pl-5 py-4 border-l-2",
         comment.is_coach_reply
-          ? "bg-amber-500/5 border-amber-500/30"
+          ? "border-l-[#B8976A]"
           : comment.is_accepted_answer
-            ? "bg-primary/5 border-primary/30"
-            : "bg-card border-border"
+            ? "border-l-primary"
+            : "border-l-transparent"
       )}
     >
-      <div className="flex items-center gap-2 mb-2 text-[11px]">
-        <span className="font-medium text-foreground/70">{authorName}</span>
-        <span className="text-primary/60 font-bold">Lv.{comment.profiles?.level ?? 1}</span>
+      <div className="flex items-center gap-2 text-xs text-tertiary mb-1.5">
+        <span className="text-foreground/70 font-medium">{authorName}</span>
         {comment.is_coach_reply && (
-          <span className="rounded-full bg-amber-500/20 text-amber-400 px-2 py-0.5 text-[10px] font-semibold">⭐ Coach</span>
+          <span className="uppercase text-[10px] tracking-wider text-[#B8976A] font-medium">Coach</span>
         )}
         {comment.is_accepted_answer && (
-          <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/15 text-primary px-2 py-0.5 text-[10px] font-semibold">
-            <CheckCircle2 size={10} /> Beste Antwort
+          <span className="flex items-center gap-0.5 text-primary text-[11px]">
+            <CheckCircle2 size={10} strokeWidth={1.5} /> Beste Antwort
           </span>
         )}
-        <span className="text-muted-foreground ml-auto flex items-center gap-0.5">
-          <Clock size={10} /> {timeAgo(comment.created_at)}
-        </span>
+        <span className="ml-auto">{timeAgo(comment.created_at)}</span>
       </div>
 
-      <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
+      <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed font-light">
         {comment.content}
       </p>
 
-      <div className="flex items-center gap-2 mt-3">
+      <div className="flex items-center gap-3 mt-2">
         {isPostAuthor && !comment.is_accepted_answer && (
-          <button onClick={onAccept} className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
-            <CheckCircle2 size={10} /> Beste Antwort
+          <button onClick={onAccept} className="flex items-center gap-1 text-[11px] text-primary hover:opacity-70 transition-opacity">
+            <CheckCircle2 size={10} strokeWidth={1.5} /> Beste Antwort
           </button>
         )}
-        <button onClick={onReport} className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors">
-          <Flag size={10} /> Melden
+        <button onClick={onReport} className="ml-auto text-[10px] text-tertiary/50 hover:text-destructive transition-colors">
+          Melden
         </button>
       </div>
     </div>
