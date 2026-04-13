@@ -13,28 +13,30 @@ const GreenButton = React.forwardRef<HTMLButtonElement, GreenButtonProps>(
     const Comp = asChild ? Slot : "button";
 
     const sizeClasses = {
-      sm: "h-9 px-5 text-[13px]",
-      default: "h-11 px-6 text-[14px]",
-      lg: "h-12 px-8 text-[15px]",
+      sm: "min-h-[44px] px-5 text-[13px]",
+      default: "min-h-[44px] px-6 text-[14px]",
+      lg: "min-h-[48px] px-8 text-[15px]",
     };
 
     const variantClasses = {
       default:
-        "bg-primary text-primary-foreground shadow-xs hover:shadow-accent active:scale-[0.98]",
+        "bg-[#3A5C4A] text-white hover:bg-[#2E4A3C] hover:translate-y-[-1px] hover:shadow-hover",
       outline:
-        "border border-border text-foreground bg-transparent hover:bg-accent-light",
+        "border border-[#E8E8E8] text-[#1A1A1A] bg-transparent hover:bg-[#FAFAF8] hover:translate-y-[-1px]",
       ghost:
-        "text-primary bg-transparent hover:bg-accent-light",
+        "text-[#3A5C4A] bg-transparent hover:bg-[#EDF2EE]",
     };
 
     return (
       <Comp
         className={cn(
-          "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] font-body font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40",
+          "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3A5C4A] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40",
+          "touch-target",
           sizeClasses[size],
           variantClasses[variant],
           className
         )}
+        style={{ transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" }}
         ref={ref}
         {...props}
       />

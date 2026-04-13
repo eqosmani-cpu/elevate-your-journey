@@ -55,9 +55,17 @@
   --color-gold: var(--gold);
   --color-gold-light: var(--gold-light);
   --color-accent-light: var(--accent-light);
+  --color-error: var(--error);
 
   --font-display: 'DM Serif Display', Georgia, serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-serif: 'DM Serif Display', Georgia, serif;
+
+  /* Animation tokens */
+  --ease-apple: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-micro: 200ms;
+  --duration-page: 350ms;
+  --stagger-child: 40ms;
 }
 
 :root {
@@ -111,12 +119,34 @@
   --gold: #B8976A;
   --gold-light: #F5EDE0;
   --accent-light: #EDF2EE;
+  --error: #C0392B;
 
-  /* Shadows — extremely subtle */
-  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.06);
+  /* Shadows — max rgba(0,0,0,0.10) */
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.04);
   --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.08);
-  --shadow-accent: 0 8px 32px rgba(58, 92, 74, 0.18);
+  --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.10);
+
+  /* Skeleton */
+  --skeleton-bg: #F0EFEB;
+}
+
+/* ============================================
+   GLOBAL ANIMATION KEYFRAMES
+   ============================================ */
+@keyframes mp-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes mp-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes mp-fade-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(8px); }
 }
 
 @layer base {
@@ -133,6 +163,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* TYPOGRAPHY: DM Serif Display for titles only, weight 400 only */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     font-weight: 400;
@@ -142,10 +173,31 @@
 
   p, span, label, li {
     line-height: 1.6;
+    font-weight: 400;
+  }
+
+  /* Prevent bold anywhere — cap at 500 */
+  strong, b {
+    font-weight: 500;
+  }
+
+  /* Links default to accent color */
+  a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  /* Global transition timing */
+  button, a, input, textarea, select {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
   }
 }
 
 @layer utilities {
+  /* ============================================
+     SHADOWS — never darker than rgba(0,0,0,0.10)
+     ============================================ */
   .shadow-xs {
     box-shadow: var(--shadow-xs);
   }
@@ -158,24 +210,110 @@
     box-shadow: var(--shadow-md);
   }
 
-  .shadow-accent {
-    box-shadow: var(--shadow-accent);
+  .shadow-hover {
+    box-shadow: var(--shadow-hover);
   }
 
+  /* ============================================
+     TEXT UTILITIES
+     ============================================ */
   .text-tertiary {
     color: #A8A8A8;
+  }
+
+  .text-error {
+    color: var(--error);
+    font-size: 12px;
   }
 
   .tracking-label {
     letter-spacing: 0.08em;
   }
 
+  /* ============================================
+     HOVER — translateY(-1px) + shadow only, NEVER scale
+     ============================================ */
   .card-hover {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .card-hover:hover {
     transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-hover);
+  }
+
+  /* ============================================
+     PAGE ENTER — staggered fade-in children
+     ============================================ */
+  .page-enter {
+    animation: mp-fade-in 350ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  .page-enter > * {
+    animation: mp-fade-in 350ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  .page-enter > *:nth-child(1) { animation-delay: 0ms; }
+  .page-enter > *:nth-child(2) { animation-delay: 40ms; }
+  .page-enter > *:nth-child(3) { animation-delay: 80ms; }
+  .page-enter > *:nth-child(4) { animation-delay: 120ms; }
+  .page-enter > *:nth-child(5) { animation-delay: 160ms; }
+  .page-enter > *:nth-child(6) { animation-delay: 200ms; }
+  .page-enter > *:nth-child(7) { animation-delay: 240ms; }
+  .page-enter > *:nth-child(8) { animation-delay: 280ms; }
+  .page-enter > *:nth-child(9) { animation-delay: 320ms; }
+  .page-enter > *:nth-child(10) { animation-delay: 360ms; }
+
+  /* ============================================
+     MICRO-INTERACTION — 200ms
+     ============================================ */
+  .micro-transition {
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ============================================
+     SKELETON — shimmer on #F0EFEB
+     ============================================ */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--skeleton-bg) 0%,
+      #F7F6F2 40%,
+      var(--skeleton-bg) 80%
+    );
+    background-size: 200% 100%;
+    animation: mp-shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* ============================================
+     SPACING — section gaps
+     ============================================ */
+  .section-gap {
+    margin-bottom: 48px;
+  }
+
+  .section-gap:last-child {
+    margin-bottom: 0;
+  }
+
+  /* ============================================
+     TOUCH TARGET — Apple HIG 44×44px minimum
+     ============================================ */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* ============================================
+     SCROLLBAR HIDE
+     ============================================ */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
