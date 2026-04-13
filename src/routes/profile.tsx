@@ -1,11 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/navigation/AppShell";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { StreakBadge } from "@/components/ui/StreakBadge";
 import { TierBadge } from "@/components/ui/TierBadge";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { GreenButton } from "@/components/ui/GreenButton";
+import { UpgradeModal } from "@/components/upgrade/UpgradeModal";
 import { Settings, ChevronRight, Award, BookOpen, Zap } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
