@@ -13,35 +13,45 @@ interface UpgradeModalProps {
   highlightTier?: "pro" | "elite";
 }
 
-const proFeatures = [
-  "Alle mentalen Trainingsaufgaben",
-  "Block Breaker Vollzugang",
-  "Unbegrenzt Community-Beiträge",
-  "KI-Coaching-Empfehlungen",
-  "1 Coaching-Session inklusive",
+type TierKey = "free" | "pro" | "elite";
+
+const tiers: { key: TierKey; label: string; price: string }[] = [
+  { key: "free", label: "Free", price: "Kostenlos" },
+  { key: "pro", label: "Pro", price: "ab €9,99/Monat" },
+  { key: "elite", label: "Elite", price: "ab €24,99/Monat" },
 ];
 
-const eliteFeatures = [
-  "Alles aus Pro inklusive",
-  "Priorisierte Coach-Buchung",
-  "Persönlicher Coach-Match",
-  "Wöchentlicher Check-in (30 Min)",
-  "Exklusive Elite-Aufgaben",
-];
+const featuresByTier: Record<TierKey, string[]> = {
+  free: [
+    "5 Trainingsaufgaben pro Woche",
+    "Community lesen (kein Posten)",
+    "Basis-Dashboard mit XP & Streak",
+  ],
+  pro: [
+    "Alle mentalen Trainingsaufgaben",
+    "Block Breaker Vollzugang",
+    "Unbegrenzt Community-Beiträge",
+    "KI-Coaching-Empfehlungen",
+    "1 Coaching-Session inklusive",
+  ],
+  elite: [
+    "Alles aus Pro inklusive",
+    "Priorisierte Coach-Buchung",
+    "Persönlicher Coach-Match",
+    "Wöchentlicher Check-in (30 Min)",
+    "Exklusive Elite-Aufgaben",
+  ],
+};
 
 export function UpgradeModal({ open, onOpenChange, highlightTier = "pro" }: UpgradeModalProps) {
-  const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
-  const isElite = highlightTier === "elite";
-  const features = isElite ? eliteFeatures : proFeatures;
-  const tierLabel = isElite ? "Elite" : "Pro";
-
-  const monthlyPrice = isElite ? 24.99 : 9.99;
-  const yearlyMonthly = isElite ? 19.99 : 7.99;
-  const yearlyTotal = isElite ? 239.88 : 95.88;
-
-  const displayPrice = billing === "monthly" ? monthlyPrice : yearlyMonthly;
+  const [selectedTier, setSelectedTier] = useState<TierKey>(highlightTier);
+  const features = featuresByTier[selectedTier];
 
   const handleUpgrade = () => {
+    if (selectedTier === "free") {
+      onOpenChange(false);
+      return;
+    }
     toast.info("Stripe Checkout wird implementiert – Demo-Modus aktiv.");
     onOpenChange(false);
   };
@@ -49,84 +59,61 @@ export function UpgradeModal({ open, onOpenChange, highlightTier = "pro" }: Upgr
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-white border-[#E8E8E8] p-0 rounded-3xl overflow-hidden [&>button]:hidden">
-        <div className="px-8 pt-10 pb-8">
+        <div className="px-6 pt-8 pb-6 sm:px-8 sm:pt-10 sm:pb-8">
           {/* Title */}
-          <h2 className="font-serif text-[32px] text-[#1A1A1A] text-center leading-tight mb-1">
-            MindPitch {tierLabel}
+          <h2 className="font-serif text-[26px] sm:text-[28px] text-[#1A1A1A] leading-tight mb-1">
+            Upgrade auf Pro oder Elite
           </h2>
-          <p className="text-[16px] font-light text-[#A8A8A8] text-center mb-6">
-            Für Spieler, die es ernst meinen.
+          <p className="text-[14px] font-light text-[#A8A8A8] mb-5">
+            Schalte alle Features frei und starte durch
           </p>
 
-          {/* Divider */}
-          <div className="h-px bg-[rgba(0,0,0,0.07)] mb-6" />
-
-          {/* Features */}
-          <div className="space-y-3.5 mb-6">
-            {features.map((feature) => (
-              <div key={feature} className="flex items-center gap-3">
-                <Check size={16} strokeWidth={2} className="text-[#3A5C4A] shrink-0" />
-                <span className="text-[14px] text-[#1A1A1A]">{feature}</span>
-              </div>
+          {/* Tier selector */}
+          <div className="flex gap-2 mb-5">
+            {tiers.map((tier) => (
+              <button
+                key={tier.key}
+                onClick={() => setSelectedTier(tier.key)}
+                className={cn(
+                  "flex-1 rounded-xl py-2.5 px-2 text-center transition-all border",
+                  selectedTier === tier.key
+                    ? "bg-[#3A5C4A] text-white border-[#3A5C4A]"
+                    : "bg-white text-[#1A1A1A] border-[#E8E8E8] hover:border-[#C8C8C8]"
+                )}
+              >
+                <span className="block text-[14px] font-semibold">{tier.label}</span>
+                <span className={cn(
+                  "block text-[11px] mt-0.5",
+                  selectedTier === tier.key ? "text-white/70" : "text-[#A8A8A8]"
+                )}>
+                  {tier.price}
+                </span>
+              </button>
             ))}
           </div>
 
-          {/* Divider */}
-          <div className="h-px bg-[rgba(0,0,0,0.07)] mb-6" />
-
-          {/* Billing toggle */}
-          <div className="flex items-center justify-center mb-5">
-            <div className="inline-flex rounded-full border border-[#E8E8E8] p-0.5">
-              <button
-                onClick={() => setBilling("monthly")}
-                className={cn(
-                  "rounded-full px-5 py-2 text-[13px] font-medium transition-colors",
-                  billing === "monthly"
-                    ? "bg-[#1A1A1A] text-white"
-                    : "text-[#A8A8A8]"
-                )}
-              >
-                Monatlich
-              </button>
-              <button
-                onClick={() => setBilling("yearly")}
-                className={cn(
-                  "rounded-full px-5 py-2 text-[13px] font-medium transition-colors",
-                  billing === "yearly"
-                    ? "bg-[#1A1A1A] text-white"
-                    : "text-[#A8A8A8]"
-                )}
-              >
-                Jährlich –20%
-              </button>
+          {/* Features */}
+          <div className="rounded-xl border border-[#E8E8E8] p-4 mb-5">
+            <p className="text-[13px] font-semibold text-[#1A1A1A] mb-3">Enthaltene Features</p>
+            <div className="space-y-3">
+              {features.map((feature) => (
+                <div key={feature} className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-[#EDF2EE] flex items-center justify-center shrink-0">
+                    <Check size={12} strokeWidth={2.5} className="text-[#3A5C4A]" />
+                  </div>
+                  <span className="text-[14px] text-[#1A1A1A]">{feature}</span>
+                </div>
+              ))}
             </div>
-          </div>
-
-          {/* Price */}
-          <div className="text-center mb-6">
-            <p className="font-serif text-[28px] text-[#1A1A1A]">
-              €{displayPrice.toFixed(2)}
-              <span className="text-[14px] font-light text-[#A8A8A8]"> / Monat</span>
-            </p>
-            {billing === "yearly" && (
-              <p className="text-[12px] text-[#A8A8A8] mt-0.5">
-                jährlich €{yearlyTotal.toFixed(2)}
-              </p>
-            )}
           </div>
 
           {/* CTA */}
           <button
             onClick={handleUpgrade}
-            className="w-full rounded-2xl bg-[#3A5C4A] text-white py-4 text-[15px] font-medium hover:bg-[#2E4A3C] transition-colors mb-3"
+            className="w-full rounded-2xl bg-[#3A5C4A] text-white py-4 text-[15px] font-medium hover:bg-[#2E4A3C] transition-colors mb-3 flex items-center justify-center gap-2"
           >
-            {tierLabel} aktivieren
+            {selectedTier === "free" ? "Weiter mit Free →" : `${tiers.find(t => t.key === selectedTier)?.label} aktivieren`}
           </button>
-
-          {/* Fine print */}
-          <p className="text-[11px] text-[#A8A8A8] text-center mb-4">
-            Jederzeit kündbar · 30 Tage Rückgaberecht
-          </p>
 
           {/* Ghost dismiss */}
           <button
