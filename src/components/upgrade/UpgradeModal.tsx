@@ -5,7 +5,8 @@ import {
 } from "@/components/ui/dialog";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { StripeEmbeddedCheckout } from "@/components/payments/StripeEmbeddedCheckout";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -43,24 +44,70 @@ const featuresByTier: Record<TierKey, string[]> = {
   ],
 };
 
+const priceIds: Record<string, { monthly: string; yearly: string }> = {
+  pro: { monthly: "pro_monthly", yearly: "pro_yearly" },
+  elite: { monthly: "elite_monthly", yearly: "elite_yearly" },
+};
+
 export function UpgradeModal({ open, onOpenChange, highlightTier = "pro" }: UpgradeModalProps) {
   const [selectedTier, setSelectedTier] = useState<TierKey>(highlightTier);
+  const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutInfo, setCheckoutInfo] = useState<{ priceId: string; email?: string; userId?: string } | null>(null);
+
   const features = featuresByTier[selectedTier];
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     if (selectedTier === "free") {
       onOpenChange(false);
       return;
     }
-    toast.info("Stripe Checkout wird implementiert – Demo-Modus aktiv.");
+
+    const { data: { user } } = await supabase.auth.getUser();
+    const priceId = priceIds[selectedTier][billing];
+
+    setCheckoutInfo({
+      priceId,
+      email: user?.email || undefined,
+      userId: user?.id || undefined,
+    });
+    setShowCheckout(true);
+  };
+
+  const handleClose = () => {
+    setShowCheckout(false);
+    setCheckoutInfo(null);
     onOpenChange(false);
   };
 
+  if (showCheckout && checkoutInfo) {
+    return (
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="max-w-lg bg-white border-[#E8E8E8] p-0 rounded-3xl overflow-hidden [&>button]:hidden max-h-[90vh] overflow-y-auto">
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="font-serif text-[22px] text-[#1A1A1A] mb-4">Checkout</h2>
+            <StripeEmbeddedCheckout
+              priceId={checkoutInfo.priceId}
+              customerEmail={checkoutInfo.email}
+              userId={checkoutInfo.userId}
+              returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/checkout/return?session_id={CHECKOUT_SESSION_ID}`}
+            />
+            <button
+              onClick={handleClose}
+              className="w-full text-center text-[13px] text-[#A8A8A8] hover:text-[#6B6B6B] transition-colors mt-4"
+            >
+              Abbrechen
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md bg-white border-[#E8E8E8] p-0 rounded-3xl overflow-hidden [&>button]:hidden">
         <div className="px-6 pt-8 pb-6 sm:px-8 sm:pt-10 sm:pb-8">
-          {/* Title */}
           <h2 className="font-serif text-[26px] sm:text-[28px] text-[#1A1A1A] leading-tight mb-1">
             Upgrade auf Pro oder Elite
           </h2>
@@ -107,6 +154,32 @@ export function UpgradeModal({ open, onOpenChange, highlightTier = "pro" }: Upgr
             </div>
           </div>
 
+          {/* Billing toggle for paid tiers */}
+          {selectedTier !== "free" && (
+            <div className="flex items-center justify-center mb-5">
+              <div className="inline-flex rounded-full border border-[#E8E8E8] p-0.5">
+                <button
+                  onClick={() => setBilling("monthly")}
+                  className={cn(
+                    "rounded-full px-5 py-2 text-[13px] font-medium transition-colors",
+                    billing === "monthly" ? "bg-[#1A1A1A] text-white" : "text-[#A8A8A8]"
+                  )}
+                >
+                  Monatlich
+                </button>
+                <button
+                  onClick={() => setBilling("yearly")}
+                  className={cn(
+                    "rounded-full px-5 py-2 text-[13px] font-medium transition-colors",
+                    billing === "yearly" ? "bg-[#1A1A1A] text-white" : "text-[#A8A8A8]"
+                  )}
+                >
+                  Jährlich –20%
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* CTA */}
           <button
             onClick={handleUpgrade}
@@ -115,9 +188,8 @@ export function UpgradeModal({ open, onOpenChange, highlightTier = "pro" }: Upgr
             {selectedTier === "free" ? "Weiter mit Free →" : `${tiers.find(t => t.key === selectedTier)?.label} aktivieren`}
           </button>
 
-          {/* Ghost dismiss */}
           <button
-            onClick={() => onOpenChange(false)}
+            onClick={handleClose}
             className="w-full text-center text-[13px] text-[#A8A8A8] hover:text-[#6B6B6B] transition-colors"
           >
             Vielleicht später
