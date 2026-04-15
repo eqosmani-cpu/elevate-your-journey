@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.get-stripe-price]
 verify_jwt = false
+
+[functions.create-portal-session]
+verify_jwt = false
