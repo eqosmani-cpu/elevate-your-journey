@@ -22,6 +22,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainingTaskIdRouteImport } from './routes/training.$taskId'
 import { Route as CommunityPostIdRouteImport } from './routes/community.$postId'
 import { Route as CoachingCoachIdRouteImport } from './routes/coaching.$coachId'
+import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 
 const TrainingRoute = TrainingRouteImport.update({
   id: '/training',
@@ -88,6 +89,11 @@ const CoachingCoachIdRoute = CoachingCoachIdRouteImport.update({
   path: '/$coachId',
   getParentRoute: () => CoachingRoute,
 } as any)
+const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
+  id: '/checkout/return',
+  path: '/checkout/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/training': typeof TrainingRouteWithChildren
+  '/checkout/return': typeof CheckoutReturnRoute
   '/coaching/$coachId': typeof CoachingCoachIdRoute
   '/community/$postId': typeof CommunityPostIdRoute
   '/training/$taskId': typeof TrainingTaskIdRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/training': typeof TrainingRouteWithChildren
+  '/checkout/return': typeof CheckoutReturnRoute
   '/coaching/$coachId': typeof CoachingCoachIdRoute
   '/community/$postId': typeof CommunityPostIdRoute
   '/training/$taskId': typeof TrainingTaskIdRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/progress': typeof ProgressRoute
   '/training': typeof TrainingRouteWithChildren
+  '/checkout/return': typeof CheckoutReturnRoute
   '/coaching/$coachId': typeof CoachingCoachIdRoute
   '/community/$postId': typeof CommunityPostIdRoute
   '/training/$taskId': typeof TrainingTaskIdRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/training'
+    | '/checkout/return'
     | '/coaching/$coachId'
     | '/community/$postId'
     | '/training/$taskId'
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/training'
+    | '/checkout/return'
     | '/coaching/$coachId'
     | '/community/$postId'
     | '/training/$taskId'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/training'
+    | '/checkout/return'
     | '/coaching/$coachId'
     | '/community/$postId'
     | '/training/$taskId'
@@ -194,6 +206,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ProgressRoute: typeof ProgressRoute
   TrainingRoute: typeof TrainingRouteWithChildren
+  CheckoutReturnRoute: typeof CheckoutReturnRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -289,6 +302,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoachingCoachIdRouteImport
       parentRoute: typeof CoachingRoute
     }
+    '/checkout/return': {
+      id: '/checkout/return'
+      path: '/checkout/return'
+      fullPath: '/checkout/return'
+      preLoaderRoute: typeof CheckoutReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -339,6 +359,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ProgressRoute: ProgressRoute,
   TrainingRoute: TrainingRouteWithChildren,
+  CheckoutReturnRoute: CheckoutReturnRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

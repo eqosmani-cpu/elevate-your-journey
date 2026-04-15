@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PaymentTestModeBanner } from "@/components/payments/PaymentTestModeBanner";
 
 import appCss from "../styles.css?url";
 
@@ -31,6 +32,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
+      <PaymentTestModeBanner />
       <Outlet />
     </QueryClientProvider>
   );
