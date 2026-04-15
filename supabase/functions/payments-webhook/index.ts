@@ -49,6 +49,12 @@ serve(async (req) => {
   }
 });
 
+function determineTier(priceId: string | undefined): string {
+  if (!priceId) return "pro";
+  if (priceId.startsWith("elite")) return "elite";
+  return "pro";
+}
+
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const userId = subscription.metadata?.userId;
   if (!userId) {
@@ -59,13 +65,9 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const item = subscription.items?.data?.[0];
   const priceId = item?.price?.metadata?.lovable_external_id || item?.price?.id;
   const productId = item?.price?.product;
-
   const periodStart = subscription.current_period_start;
   const periodEnd = subscription.current_period_end;
-
-  // Determine tier from price ID
-  let tier: string = "pro";
-  if (priceId?.startsWith("elite")) tier = "elite";
+  const tier = determineTier(priceId);
 
   await supabase.from("subscriptions").upsert(
     {
@@ -77,13 +79,14 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
       status: subscription.status,
       current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
       current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+      cancel_at_period_end: subscription.cancel_at_period_end || false,
       environment: env,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "stripe_subscription_id" }
   );
 
-  // Update user profile tier
+  // Update profile tier
   await supabase.from("profiles").update({ tier }).eq("id", userId);
 }
 
@@ -91,7 +94,6 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
   const item = subscription.items?.data?.[0];
   const priceId = item?.price?.metadata?.lovable_external_id || item?.price?.id;
   const productId = item?.price?.product;
-
   const periodStart = subscription.current_period_start;
   const periodEnd = subscription.current_period_end;
 
@@ -109,15 +111,26 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
     .eq("stripe_subscription_id", subscription.id)
     .eq("environment", env);
 
-  // If canceled, revert tier to free
-  if (subscription.status === "canceled") {
-    const { data: sub } = await supabase
-      .from("subscriptions")
-      .select("user_id")
-      .eq("stripe_subscription_id", subscription.id)
-      .single();
-    if (sub?.user_id) {
-      await supabase.from("profiles").update({ tier: "free" }).eq("id", sub.user_id);
+  // Get user_id from subscription record
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("user_id")
+    .eq("stripe_subscription_id", subscription.id)
+    .single();
+
+  if (sub?.user_id) {
+    if (subscription.status === "canceled" || subscription.status === "unpaid") {
+      // Check if period has ended — if so, revert to free
+      const periodEnd = subscription.current_period_end;
+      const periodEndDate = periodEnd ? new Date(periodEnd * 1000) : null;
+      if (!periodEndDate || periodEndDate <= new Date()) {
+        await supabase.from("profiles").update({ tier: "free" }).eq("id", sub.user_id);
+      }
+      // If period hasn't ended yet, keep current tier (access until period end)
+    } else if (subscription.status === "active" || subscription.status === "trialing") {
+      // Upgrade/downgrade: sync tier from new price
+      const newTier = determineTier(priceId);
+      await supabase.from("profiles").update({ tier: newTier }).eq("id", sub.user_id);
     }
   }
 }
