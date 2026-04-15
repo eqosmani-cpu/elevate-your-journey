@@ -174,7 +174,7 @@ export function UpgradeModal({ open, onOpenChange, highlightTier = "pro" }: Upgr
                     billing === "yearly" ? "bg-[#1A1A1A] text-white" : "text-[#A8A8A8]"
                   )}
                 >
-                  Jährlich –20%
+                  Jährlich –30%
                 </button>
               </div>
             </div>
